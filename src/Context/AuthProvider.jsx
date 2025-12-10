@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useContext } from "react";
-import { AuthContext } from "./AuthContext";
+import React, { useEffect, useState, useContext, createContext } from "react";
+
 import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
@@ -12,6 +12,8 @@ import {
 } from "firebase/auth";
 
 import { auth } from "../Firebase/firebase.config";
+
+export const AuthContext = createContext(null);
 
 const googleProvider = new GoogleAuthProvider();
 
@@ -51,6 +53,7 @@ const AuthProvider = ({ children }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+
       setLoading(false);
     });
 
