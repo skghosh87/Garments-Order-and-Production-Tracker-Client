@@ -5,18 +5,28 @@ import Register from "../Pages/Register";
 import Login from "../Pages/Login";
 import AllProductsPage from "../Pages/AllProductsPage";
 import ProductDetailsPage from "../Pages/ProductDetailsPage";
-import PrivateRoute from "./PrivateRoute";
 import DashboardLayout from "../Layouts/DashboardLayout";
+import RoleBasedRoute from "./RoleBasedRoute"; // ✨ আপনার তৈরি করা রোল-ভিত্তিক রুট কম্পোনেন্ট
+import NotFound from "../Pages/NotFound"; // 404 পেজের জন্য
 
+// ড্যাশবোর্ড পেজ ইম্পোর্ট
 import MyOrders from "../Pages/Dashboard/Buyer/MyOrders";
+import TrackOrder from "../Pages/Dashboard/Buyer/TrackOrder";
 import ManageUsers from "../Pages/Dashboard/Admin/ManageUsers";
+import AdminAllProducts from "../Pages/Dashboard/Admin/AdminAllProducts"; // Admin All Products
+import AllOrders from "../Pages/Dashboard/Admin/AllOrders"; // Admin All Orders
 import AddProduct from "../Pages/Dashboard/Manager/AddProduct";
+import ManageProducts from "../Pages/Dashboard/Manager/ManageProducts";
+import PendingOrders from "../Pages/Dashboard/Manager/PendingOrders";
+import ApprovedOrders from "../Pages/Dashboard/Manager/ApprovedOrders";
+import Profile from "../Pages/Dashboard/Shared/Profile"; // Shared Profile Page
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <MainLayout />,
-    errorElement: <div> 404 Page Not Found</div>,
+    // অ্যাসাইনমেন্টের প্রয়োজনীয়তা অনুসারে একটি 404 পেজ (NotFound কম্পোনেন্ট)
+    errorElement: <div>404 Not Found</div>,
     children: [
       {
         index: true,
@@ -34,41 +44,135 @@ export const router = createBrowserRouter([
         path: "all-products",
         element: <AllProductsPage />,
       },
-      // প্রাইভেট রুট ১: Product Details (লগইন করা ইউজারদের জন্য)
+      // প্রোডাক্ট ডিটেইলস পেজ (Private Route): শুধু লগইন করা ইউজারদের জন্য
       {
         path: "product/:id",
+        // Admin, Manager, Buyer - সকলেই প্রোডাক্ট দেখতে পারবে।
         element: (
-          <PrivateRoute>
+          <RoleBasedRoute allowedRoles={["admin", "manager", "buyer"]}>
             <ProductDetailsPage />
-          </PrivateRoute>
+          </RoleBasedRoute>
+        ),
+      },
+      // About Us এবং Contact রুটগুলি যোগ করতে পারেন (যদি থাকে)
+      // { path: "about-us", element: <AboutUs /> },
+      // { path: "contact", element: <Contact /> },
+    ],
+  },
+
+  // ড্যাশবোর্ড রুট কাঠামো
+  {
+    path: "/dashboard",
+    // ড্যাশবোর্ডের মূল লেআউটে প্রবেশ করতে হলে যে কোনো একটি বৈধ রোল থাকতে হবে
+    element: (
+      <RoleBasedRoute allowedRoles={["admin", "manager", "buyer"]}>
+        <DashboardLayout />
+      </RoleBasedRoute>
+    ),
+    children: [
+      // --- ১. বাইয়ার (Buyer) রুটস (Role: buyer) ---
+      {
+        path: "my-orders",
+        element: (
+          <RoleBasedRoute allowedRoles={["buyer"]}>
+            {" "}
+            <MyOrders />{" "}
+          </RoleBasedRoute>
+        ),
+      },
+      {
+        path: "track-order",
+        element: (
+          <RoleBasedRoute allowedRoles={["buyer"]}>
+            {" "}
+            <TrackOrder />{" "}
+          </RoleBasedRoute>
+        ),
+      },
+
+      // --- ২. ম্যানেজার (Manager) রুটস (Role: manager) ---
+      {
+        path: "add-product",
+        element: (
+          <RoleBasedRoute allowedRoles={["manager"]}>
+            {" "}
+            <AddProduct />{" "}
+          </RoleBasedRoute>
+        ),
+      },
+      {
+        path: "manage-products",
+        element: (
+          <RoleBasedRoute allowedRoles={["manager"]}>
+            {" "}
+            <ManageProducts />{" "}
+          </RoleBasedRoute>
+        ),
+      },
+      {
+        path: "pending-orders",
+        element: (
+          <RoleBasedRoute allowedRoles={["manager"]}>
+            {" "}
+            <PendingOrders />{" "}
+          </RoleBasedRoute>
+        ),
+      },
+      {
+        path: "approved-orders",
+        element: (
+          <RoleBasedRoute allowedRoles={["manager"]}>
+            {" "}
+            <ApprovedOrders />{" "}
+          </RoleBasedRoute>
+        ),
+      },
+
+      // --- ৩. অ্যাডমিন (Admin) রুটস (Role: admin) ---
+      {
+        path: "manage-users",
+        element: (
+          <RoleBasedRoute allowedRoles={["admin"]}>
+            {" "}
+            <ManageUsers />{" "}
+          </RoleBasedRoute>
+        ),
+      },
+      {
+        path: "all-products", // ড্যাশবোর্ড/all-products (Admin-এর জন্য)
+        element: (
+          <RoleBasedRoute allowedRoles={["admin"]}>
+            {" "}
+            <AdminAllProducts />{" "}
+          </RoleBasedRoute>
+        ),
+      },
+      {
+        path: "all-orders", // ড্যাশবোর্ড/all-orders (Admin-এর জন্য)
+        element: (
+          <RoleBasedRoute allowedRoles={["admin"]}>
+            {" "}
+            <AllOrders />{" "}
+          </RoleBasedRoute>
+        ),
+      },
+
+      // --- ৪. শেয়ার্ড প্রোফাইল রুট (সকলের জন্য) ---
+      {
+        // /dashboard/profile
+        path: "profile",
+        element: (
+          <RoleBasedRoute allowedRoles={["admin", "manager", "buyer"]}>
+            {" "}
+            <Profile />{" "}
+          </RoleBasedRoute>
         ),
       },
     ],
   },
-  // প্রাইভেট রুট ২: ড্যাশবোর্ড কাঠামো
-  {
-    path: "/dashboard",
-    element: (
-      <PrivateRoute>
-        <DashboardLayout />
-      </PrivateRoute>
-    ),
-    children: [
-      // ক্রেতা রুটস
-      {
-        path: "my-orders",
-        element: <MyOrders />,
-      },
-      // ম্যানেজার রুটস
-      {
-        path: "add-product",
-        element: <AddProduct />,
-      },
-      // অ্যাডমিন রুটস
-      {
-        path: "manage-users",
-        element: <ManageUsers />,
-      },
-    ],
-  },
+
+  // *404 Not Found Page Handled Globally*
+  // আপনি MainLayout-এ errorElement সেট করায় আলাদাভাবে 404 রুট দরকার নেই,
+  // তবে চাইলে ওয়াইল্ডকার্ড ব্যবহার করা যেত:
+  // { path: "*", element: <NotFound /> },
 ]);
