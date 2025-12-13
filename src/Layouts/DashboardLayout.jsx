@@ -1,14 +1,16 @@
 import React from "react";
 import { Outlet, NavLink } from "react-router-dom";
-import { useAuth } from "../Context/AuthProvider"; // আপনার তৈরি করা AuthContext হুক
-import Navbar from "../Components/Shared/Navbar"; // আপনার বিদ্যমান Navbar
-import Footer from "../Components/Shared/Footer"; // আপনার বিদ্যমান Footer
+import { useAuth } from "../Context/AuthProvider";
+import Navbar from "../Components/Shared/Navbar";
+import Footer from "../Components/Shared/Footer";
 import {
   FaUserShield,
   FaProductHunt,
   FaClipboardList,
   FaUserEdit,
   FaTruck,
+  FaSpinner,
+  FaHome,
 } from "react-icons/fa";
 
 // ১. রোল-ভিত্তিক ড্যাশবোর্ড মেনু ডেটা
@@ -19,60 +21,88 @@ const getDashboardLinks = (role) => {
         {
           path: "manage-users",
           icon: <FaUserShield />,
-          label: "Manage Managers & Buyer",
+          label: "User Management",
         },
+
         {
-          path: "all-products",
-          icon: <FaProductHunt />,
-          label: "All Products (Admin View)",
+          path: "manage-orders",
+          icon: <FaClipboardList />,
+          label: "All Orders",
         },
-        { path: "all-orders", icon: <FaClipboardList />, label: "All Orders" },
         { path: "profile", icon: <FaUserEdit />, label: "My Profile" },
       ];
     case "manager":
       return [
-        { path: "add-product", icon: <FaProductHunt />, label: "Add Product" },
+        {
+          path: "manage-users",
+          icon: <FaUserShield />,
+          label: "User Management",
+        },
+        {
+          path: "manage-orders",
+          icon: <FaClipboardList />,
+          label: "Orders Management",
+        },
+        {
+          path: "add-product",
+          icon: <FaProductHunt />,
+          label: "Add Product",
+        },
         {
           path: "manage-products",
           icon: <FaProductHunt />,
           label: "Manage Products",
         },
-        {
-          path: "pending-orders",
-          icon: <FaClipboardList />,
-          label: "Pending Orders",
-        },
-        {
-          path: "approved-orders",
-          icon: <FaTruck />,
-          label: "Approved Orders",
-        },
         { path: "profile", icon: <FaUserEdit />, label: "My Profile" },
       ];
     case "buyer":
-    default: // যদি রোল না থাকে, ডিফল্ট হিসেবে ক্রেতার মেনু
+    default:
       return [
-        { path: "my-orders", icon: <FaClipboardList />, label: "My Orders" },
-        { path: "track-order", icon: <FaTruck />, label: "Track Order" },
+        {
+          path: "my-orders",
+          icon: <FaClipboardList />,
+          label: "My Orders",
+        },
         { path: "profile", icon: <FaUserEdit />, label: "My Profile" },
       ];
   }
 };
 
 const DashboardLayout = () => {
-  // AuthProvider থেকে ব্যবহারকারীর তথ্য (ইউজারের রোল পেতে)
-  const { user } = useAuth();
+  const { user, userRole, userStatus, loading: authLoading } = useAuth();
 
-  // মনে রাখবেন: Firebase Auth থেকে প্রাপ্ত user অবজেক্টে সরাসরি 'role' থাকে না।
-  // MongoDB থেকে ইউজার ডেটা লোড করার পর role পাবেন।
-  // আপাতত একটি ডামি রোল ব্যবহার করছি:
-  const userRole = "manager"; // এখানে user.role ব্যবহার করতে হবে (যা MongoDB থেকে লোড করতে হবে)
+  // লোডিং স্টেট হ্যান্ডলিং
+  if (authLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen dark:bg-gray-900">
+        <FaSpinner className="text-5xl text-green-500 animate-spin" />
+        <span className="ml-4 text-xl dark:text-gray-300">
+          Dashboard is loading...
+        </span>
+      </div>
+    );
+  }
+
+  if (userStatus === "suspended") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-red-50 dark:bg-red-950">
+        <FaUserSlash className="text-6xl text-red-600 mb-4" />
+        <h1 className="text-2xl font-bold text-red-800 dark:text-red-300">
+          Account Suspended
+        </h1>
+        <p className="text-lg text-red-600 dark:text-red-400 mt-2">
+          Your account has been suspended. Please contact support for more
+          information.
+        </p>
+      </div>
+    );
+  }
 
   const dashboardLinks = getDashboardLinks(userRole);
 
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* ১. হেডার/নভবার - ড্যাশবোর্ডের জন্যেও নববার দরকার */}
+    <div className="flex flex-col min-h-screen dark:bg-gray-900">
+      {/* ১. হেডার/নভবার */}
       <Navbar />
 
       {/* ২. ড্যাশবোর্ডের মূল বডি */}
@@ -80,13 +110,13 @@ const DashboardLayout = () => {
         <input id="my-drawer-2" type="checkbox" className="drawer-toggle" />
 
         {/* ২.১. কন্টেন্ট এরিয়া (প্রধান ভাগ) */}
-        <div className="drawer-content flex flex-col items-center justify-start p-4 bg-base-100">
+        <div className="drawer-content flex flex-col justify-start p-4 sm:p-8 bg-gray-50 dark:bg-gray-900">
           {/* মোবাইল স্ক্রিনের জন্য সাইডবার টগল বাটন */}
           <label
             htmlFor="my-drawer-2"
-            className="btn btn-primary drawer-button lg:hidden mb-4 self-start"
+            className="btn btn-sm btn-success drawer-button lg:hidden mb-4 self-start text-white dark:text-gray-900"
           >
-            Open Dashboard Menu
+            Dashboard Menu
           </label>
 
           {/* ড্যাশবোর্ডের ভেতরের পেজগুলি এখানে রেন্ডার হবে */}
@@ -96,40 +126,45 @@ const DashboardLayout = () => {
         </div>
 
         {/* ২.২. সাইডবার (ড্যাশবোর্ড মেনু) */}
-        <div className="drawer-side">
+        <div className="drawer-side z-20">
           <label
             htmlFor="my-drawer-2"
             aria-label="close sidebar"
             className="drawer-overlay"
           ></label>
-          <ul className="menu p-4 w-64 min-h-full bg-base-200 text-base-content">
-            <h2 className="text-xl font-bold mb-4 text-center border-b pb-2">
-              {userRole.toUpperCase()} Dashboard
+          <ul className="menu p-4 w-64 min-h-full bg-white dark:bg-gray-800 text-gray-800 dark:text-white border-r dark:border-gray-700 shadow-xl">
+            <h2 className="text-2xl font-extrabold mb-6 text-green-600 dark:text-green-400 text-center border-b pb-3">
+              {userRole ? userRole.toUpperCase() : "BUYER"} Dashboard
             </h2>
 
             {/* রোল-ভিত্তিক নেভিগেশন লিঙ্কগুলি */}
             {dashboardLinks.map((link) => (
-              <li key={link.path}>
+              <li key={link.path} className="mb-1">
                 <NavLink
                   to={link.path}
                   className={({ isActive }) =>
-                    isActive
-                      ? "bg-primary text-primary-content font-bold"
-                      : "hover:bg-base-300"
+                    `flex items-center space-x-3 p-3 rounded-lg transition duration-200 ${
+                      isActive
+                        ? "bg-green-500 text-white font-bold shadow-md"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    }`
                   }
                 >
                   {link.icon}
-                  {link.label}
+                  <span className="ml-2">{link.label}</span>
                 </NavLink>
               </li>
             ))}
 
             {/* মূল সাইটে ফেরার জন্য একটি লিঙ্ক */}
-            <div className="divider"></div>
+            <div className="divider my-4 border-t border-gray-200 dark:border-gray-700"></div>
             <li>
-              <NavLink to="/">
-                <FaUserEdit />
-                Back to Home
+              <NavLink
+                to="/"
+                className="text-gray-500 hover:text-green-500 p-3 rounded-lg"
+              >
+                <FaHome />
+                <span className="ml-2">Go back to Home Page</span>
               </NavLink>
             </li>
           </ul>

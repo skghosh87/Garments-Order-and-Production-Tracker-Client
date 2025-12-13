@@ -7,19 +7,18 @@ import AllProductsPage from "../Pages/AllProductsPage";
 import ProductDetailsPage from "../Pages/ProductDetailsPage";
 import DashboardLayout from "../Layouts/DashboardLayout";
 import RoleBasedRoute from "./RoleBasedRoute"; // ✨ আপনার তৈরি করা রোল-ভিত্তিক রুট কম্পোনেন্ট
-import NotFound from "../Pages/NotFound"; // 404 পেজের জন্য
 
 // ড্যাশবোর্ড পেজ ইম্পোর্ট
-import MyOrders from "../Pages/Dashboard/Buyer/MyOrders";
-import TrackOrder from "../Pages/Dashboard/Buyer/TrackOrder";
-import ManageUsers from "../Pages/Dashboard/Admin/ManageUsers";
-import AdminAllProducts from "../Pages/Dashboard/Admin/AdminAllProducts"; // Admin All Products
-import AllOrders from "../Pages/Dashboard/Admin/AllOrders"; // Admin All Orders
-import AddProduct from "../Pages/Dashboard/Manager/AddProduct";
-import ManageProducts from "../Pages/Dashboard/Manager/ManageProducts";
-import PendingOrders from "../Pages/Dashboard/Manager/PendingOrders";
-import ApprovedOrders from "../Pages/Dashboard/Manager/ApprovedOrders";
-import Profile from "../Pages/Dashboard/Shared/Profile"; // Shared Profile Page
+// import MyOrders from "../Pages/Dashboard/Buyer/MyOrders";
+// import TrackOrder from "../Pages/Dashboard/Buyer/TrackOrder";
+// import ManageUsers from "../Pages/Dashboard/Admin/ManageUsers";
+// import AdminAllProducts from "../Pages/Dashboard/Admin/AdminAllProducts"; // Admin All Products
+// import AllOrders from "../Pages/Dashboard/Admin/AllOrders"; // Admin All Orders
+// import AddProduct from "../Pages/Dashboard/Manager/AddProduct";
+// import ManageProducts from "../Pages/Dashboard/Manager/ManageProducts";
+// import PendingOrders from "../Pages/Dashboard/Manager/PendingOrders";
+// import ApprovedOrders from "../Pages/Dashboard/Manager/ApprovedOrders";
+// import Profile from "../Pages/Dashboard/Shared/Profile"; // Shared Profile Page
 
 export const router = createBrowserRouter([
   {
