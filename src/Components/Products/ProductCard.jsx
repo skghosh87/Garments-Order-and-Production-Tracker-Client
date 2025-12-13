@@ -3,11 +3,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-// যদি আপনি Framer Motion ব্যবহার করে থাকেন, তবে এটি ইম্পোর্ট করুন
 
 // Product ডেটা prop হিসেবে পাবে
 const ProductCard = ({ product }) => {
-  // নিশ্চিত করুন যে ডেটা অবজেক্টে এই প্রপার্টিগুলো আছে:
   const { _id, name, shortDescription, price, imageUrl, category } = product;
 
   // শর্ট ডেসক্রিপশন ট্রিম করার ফাংশন
@@ -18,7 +16,6 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    // Framer Motion ব্যবহার করে একটি হালকা হোভার ইফেক্ট যোগ করা হলো
     <motion.div
       className="bg-white dark:bg-gray-800 rounded-xl shadow-lg transition-all duration-300 overflow-hidden flex flex-col h-full border border-gray-100 dark:border-gray-700"
       whileHover={{ y: -5, boxShadow: "0 10px 15px rgba(0, 0, 0, 0.1)" }}
@@ -27,7 +24,7 @@ const ProductCard = ({ product }) => {
       {/* 1. Product Image */}
       <div className="relative overflow-hidden">
         <img
-          src={imageUrl || "path/to/default-image.jpg"} // ফলব্যাক ইমেজ দিন
+          src={imageUrl || "path/to/default-image.jpg"}
           alt={name}
           className="w-full h-56 object-cover transition-transform duration-500 hover:scale-105"
         />
