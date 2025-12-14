@@ -70,103 +70,100 @@ export const router = createBrowserRouter([
     ),
     children: [
       // --- ১. বাইয়ার (Buyer) রুটস (Role: buyer) ---
-      {
-        path: "my-orders",
-        element: (
-          <RoleBasedRoute allowedRoles={["buyer"]}>
-            {" "}
-            <MyOrders />{" "}
-          </RoleBasedRoute>
-        ),
-      },
-      {
-        path: "track-order",
-        element: (
-          <RoleBasedRoute allowedRoles={["buyer"]}>
-            {" "}
-            <TrackOrder />{" "}
-          </RoleBasedRoute>
-        ),
-      },
-
-      // --- ২. ম্যানেজার (Manager) রুটস (Role: manager) ---
-      {
-        path: "add-product",
-        element: (
-          <RoleBasedRoute allowedRoles={["manager"]}>
-            {" "}
-            <AddProduct />{" "}
-          </RoleBasedRoute>
-        ),
-      },
-      {
-        path: "manage-products",
-        element: (
-          <RoleBasedRoute allowedRoles={["manager"]}>
-            {" "}
-            <ManageProducts />{" "}
-          </RoleBasedRoute>
-        ),
-      },
-      {
-        path: "pending-orders",
-        element: (
-          <RoleBasedRoute allowedRoles={["manager"]}>
-            {" "}
-            <PendingOrders />{" "}
-          </RoleBasedRoute>
-        ),
-      },
-      {
-        path: "approved-orders",
-        element: (
-          <RoleBasedRoute allowedRoles={["manager"]}>
-            {" "}
-            <ApprovedOrders />{" "}
-          </RoleBasedRoute>
-        ),
-      },
-
-      // --- ৩. অ্যাডমিন (Admin) রুটস (Role: admin) ---
-      {
-        path: "manage-users",
-        element: (
-          <RoleBasedRoute allowedRoles={["admin"]}>
-            {" "}
-            <ManageUsers />{" "}
-          </RoleBasedRoute>
-        ),
-      },
-      {
-        path: "all-products", // ড্যাশবোর্ড/all-products (Admin-এর জন্য)
-        element: (
-          <RoleBasedRoute allowedRoles={["admin"]}>
-            {" "}
-            <AdminAllProducts />{" "}
-          </RoleBasedRoute>
-        ),
-      },
-      {
-        path: "all-orders", // ড্যাশবোর্ড/all-orders (Admin-এর জন্য)
-        element: (
-          <RoleBasedRoute allowedRoles={["admin"]}>
-            {" "}
-            <AllOrders />{" "}
-          </RoleBasedRoute>
-        ),
-      },
-
-      // --- ৪. শেয়ার্ড প্রোফাইল রুট (সকলের জন্য) ---
-      {
-        // /dashboard/profile
-        path: "profile",
-        element: (
-          <RoleBasedRoute allowedRoles={["admin", "manager", "buyer"]}>
-            {" "}
-            <Profile />{" "}
-          </RoleBasedRoute>
-        ),
-      },
+      // {
+      //   path: "my-orders",
+      //   element: (
+      //     <RoleBasedRoute allowedRoles={["buyer"]}>
+      //       {" "}
+      //       <MyOrders />{" "}
+      //     </RoleBasedRoute>
+      //   ),
+      // // },
+      // {
+      //   path: "track-order",
+      //   element: (
+      //     <RoleBasedRoute allowedRoles={["buyer"]}>
+      //       {" "}
+      //       <TrackOrder />{" "}
+      //     </RoleBasedRoute>
+      //   ),
+      // },
+      // // --- ২. ম্যানেজার (Manager) রুটস (Role: manager) ---
+      // {
+      //   path: "add-product",
+      //   element: (
+      //     <RoleBasedRoute allowedRoles={["manager"]}>
+      //       {" "}
+      //       <AddProduct />{" "}
+      //     </RoleBasedRoute>
+      //   ),
+      // },
+      // {
+      //   path: "manage-products",
+      //   element: (
+      //     <RoleBasedRoute allowedRoles={["manager"]}>
+      //       {" "}
+      //       <ManageProducts />{" "}
+      //     </RoleBasedRoute>
+      //   ),
+      // },
+      // {
+      //   path: "pending-orders",
+      //   element: (
+      //     <RoleBasedRoute allowedRoles={["manager"]}>
+      //       {" "}
+      //       <PendingOrders />{" "}
+      //     </RoleBasedRoute>
+      //   ),
+      // },
+      // {
+      //   path: "approved-orders",
+      //   element: (
+      //     <RoleBasedRoute allowedRoles={["manager"]}>
+      //       {" "}
+      //       <ApprovedOrders />{" "}
+      //     </RoleBasedRoute>
+      //   ),
+      // },
+      // // --- ৩. অ্যাডমিন (Admin) রুটস (Role: admin) ---
+      // {
+      //   path: "manage-users",
+      //   element: (
+      //     <RoleBasedRoute allowedRoles={["admin"]}>
+      //       {" "}
+      //       <ManageUsers />{" "}
+      //     </RoleBasedRoute>
+      //   ),
+      // },
+      // {
+      //   path: "all-products", // ড্যাশবোর্ড/all-products (Admin-এর জন্য)
+      //   element: (
+      //     <RoleBasedRoute allowedRoles={["admin"]}>
+      //       {" "}
+      //       <AdminAllProducts />{" "}
+      //     </RoleBasedRoute>
+      //   ),
+      // },
+      // {
+      //   path: "all-orders", // ড্যাশবোর্ড/all-orders (Admin-এর জন্য)
+      //   element: (
+      //     <RoleBasedRoute allowedRoles={["admin"]}>
+      //       {" "}
+      //       <AllOrders />{" "}
+      //     </RoleBasedRoute>
+      //   ),
+      // },
+      // // --- ৪. শেয়ার্ড প্রোফাইল রুট (সকলের জন্য) ---
+      // {
+      //   // /dashboard/profile
+      //   path: "profile",
+      //   element: (
+      //     <RoleBasedRoute allowedRoles={["admin", "manager", "buyer"]}>
+      //       {" "}
+      //       <Profile />{" "}
+      //     </RoleBasedRoute>
+      //   ),
+      // },
     ],
   },
 
