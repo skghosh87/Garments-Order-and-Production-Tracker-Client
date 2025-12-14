@@ -14,7 +14,7 @@ import { toast, ToastContainer } from "react-toastify";
 import { useAuth } from "../Context/AuthProvider";
 import Container from "../Components/Shared/Container";
 // import NotFound from "../Pages/NotFound";
-// import PlaceOrderModal from "../Components/Modals/PlaceOrderModal";
+import PlaceOrderModal from "../Components/Modals/PlaceOrderModal";
 
 const ProductDetailsPage = () => {
   // 1. URL থেকে প্রোডাক্ট আইডি গ্রহণ
@@ -63,7 +63,7 @@ const ProductDetailsPage = () => {
       <div className="flex justify-center items-center min-h-[70vh] dark:bg-gray-900">
         <FaSpinner className="text-5xl text-green-500 animate-spin" />
         <span className="ml-4 text-xl dark:text-gray-300">
-          তথ্য লোড হচ্ছে...
+          Information Loading...
         </span>
       </div>
     );
