@@ -7,7 +7,7 @@ const MyLink = ({ to, className, children }) => {
       to={to}
       className={({ isActive }) =>
         isActive
-          ? "text-yellow-500 underline font-bold"
+          ? "bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
           : `${className} font-semibold`
       }
     >

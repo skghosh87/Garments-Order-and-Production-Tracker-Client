@@ -1,4 +1,3 @@
-import React from "react";
 import { Outlet, NavLink } from "react-router-dom";
 import { useAuth } from "../Context/AuthProvider";
 import Navbar from "../Components/Shared/Navbar";
@@ -8,12 +7,14 @@ import {
   FaProductHunt,
   FaClipboardList,
   FaUserEdit,
-  FaTruck,
   FaSpinner,
   FaHome,
+  FaUserSlash,
 } from "react-icons/fa";
 
-// ১. রোল-ভিত্তিক ড্যাশবোর্ড মেনু ডেটা
+/* ===========================
+   Role Based Dashboard Links
+=========================== */
 const getDashboardLinks = (role) => {
   switch (role) {
     case "admin":
@@ -21,28 +22,22 @@ const getDashboardLinks = (role) => {
         {
           path: "manage-users",
           icon: <FaUserShield />,
-          label: "User Management",
+          label: "Manage Users",
         },
-
         {
           path: "manage-orders",
           icon: <FaClipboardList />,
           label: "All Orders",
         },
-        { path: "profile", icon: <FaUserEdit />, label: "My Profile" },
+        {
+          path: "profile",
+          icon: <FaUserEdit />,
+          label: "My Profile",
+        },
       ];
+
     case "manager":
       return [
-        {
-          path: "manage-users",
-          icon: <FaUserShield />,
-          label: "User Management",
-        },
-        {
-          path: "manage-orders",
-          icon: <FaClipboardList />,
-          label: "Orders Management",
-        },
         {
           path: "add-product",
           icon: <FaProductHunt />,
@@ -53,8 +48,23 @@ const getDashboardLinks = (role) => {
           icon: <FaProductHunt />,
           label: "Manage Products",
         },
-        { path: "profile", icon: <FaUserEdit />, label: "My Profile" },
+        {
+          path: "pending-orders",
+          icon: <FaClipboardList />,
+          label: "Pending Orders",
+        },
+        {
+          path: "approved-orders",
+          icon: <FaClipboardList />,
+          label: "Approved Orders",
+        },
+        {
+          path: "profile",
+          icon: <FaUserEdit />,
+          label: "My Profile",
+        },
       ];
+
     case "buyer":
     default:
       return [
@@ -63,36 +73,39 @@ const getDashboardLinks = (role) => {
           icon: <FaClipboardList />,
           label: "My Orders",
         },
-        { path: "profile", icon: <FaUserEdit />, label: "My Profile" },
+        {
+          path: "profile",
+          icon: <FaUserEdit />,
+          label: "My Profile",
+        },
       ];
   }
 };
 
 const DashboardLayout = () => {
-  const { user, userRole, userStatus, loading: authLoading } = useAuth();
+  const { user, userRole, userStatus, loading } = useAuth();
 
-  // লোডিং স্টেট হ্যান্ডলিং
-  if (authLoading) {
+  /* Loading State */
+  if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen dark:bg-gray-900">
+      <div className="flex flex-col items-center justify-center min-h-screen">
         <FaSpinner className="text-5xl text-green-500 animate-spin" />
-        <span className="ml-4 text-xl dark:text-gray-300">
-          Dashboard is loading...
-        </span>
+        <p className="mt-4 text-lg font-medium text-gray-600">
+          Loading Dashboard...
+        </p>
       </div>
     );
   }
 
+  /* Suspended Account */
   if (userStatus === "suspended") {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-red-50 dark:bg-red-950">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-red-50 px-6">
         <FaUserSlash className="text-6xl text-red-600 mb-4" />
-        <h1 className="text-2xl font-bold text-red-800 dark:text-red-300">
-          Account Suspended
-        </h1>
-        <p className="text-lg text-red-600 dark:text-red-400 mt-2">
-          Your account has been suspended. Please contact support for more
-          information.
+        <h1 className="text-2xl font-bold text-red-700">Account Suspended</h1>
+        <p className="text-center text-red-600 mt-2 max-w-md">
+          Your account has been suspended by admin. Please check your profile
+          for suspension reason.
         </p>
       </div>
     );
@@ -101,77 +114,74 @@ const DashboardLayout = () => {
   const dashboardLinks = getDashboardLinks(userRole);
 
   return (
-    <div className="flex flex-col min-h-screen dark:bg-gray-900">
-      {/* ১. হেডার/নভবার */}
+    <div className="flex flex-col min-h-screen bg-gray-100">
+      {/* Navbar */}
       <Navbar />
 
-      {/* ২. ড্যাশবোর্ডের মূল বডি */}
+      {/* Dashboard Body */}
       <div className="drawer lg:drawer-open flex-grow">
-        <input id="my-drawer-2" type="checkbox" className="drawer-toggle" />
+        <input
+          id="dashboard-drawer"
+          type="checkbox"
+          className="drawer-toggle"
+        />
 
-        {/* ২.১. কন্টেন্ট এরিয়া (প্রধান ভাগ) */}
-        <div className="drawer-content flex flex-col justify-start p-4 sm:p-8 bg-gray-50 dark:bg-gray-900">
-          {/* মোবাইল স্ক্রিনের জন্য সাইডবার টগল বাটন */}
+        {/* Main Content */}
+        <div className="drawer-content p-4 md:p-6">
           <label
-            htmlFor="my-drawer-2"
-            className="btn btn-sm btn-success drawer-button lg:hidden mb-4 self-start text-white dark:text-gray-900"
+            htmlFor="dashboard-drawer"
+            className="btn btn-success btn-sm drawer-button lg:hidden mb-4 text-white"
           >
             Dashboard Menu
           </label>
 
-          {/* ড্যাশবোর্ডের ভেতরের পেজগুলি এখানে রেন্ডার হবে */}
-          <main className="w-full max-w-7xl mx-auto">
+          <main className="max-w-7xl mx-auto w-full">
             <Outlet />
           </main>
         </div>
 
-        {/* ২.২. সাইডবার (ড্যাশবোর্ড মেনু) */}
-        <div className="drawer-side z-20">
-          <label
-            htmlFor="my-drawer-2"
-            aria-label="close sidebar"
-            className="drawer-overlay"
-          ></label>
-          <ul className="menu p-4 w-64 min-h-full bg-white dark:bg-gray-800 text-gray-800 dark:text-white border-r dark:border-gray-700 shadow-xl">
-            <h2 className="text-2xl font-extrabold mb-6 text-green-600 dark:text-green-400 text-center border-b pb-3">
-              {userRole ? userRole.toUpperCase() : "BUYER"} Dashboard
+        {/* Sidebar */}
+        <div className="drawer-side">
+          <label htmlFor="dashboard-drawer" className="drawer-overlay"></label>
+
+          <aside className="w-64 min-h-full bg-white border-r shadow-lg">
+            <h2 className="text-xl font-bold text-center py-5 text-green-600 border-b">
+              {userRole?.toUpperCase()} Dashboard
             </h2>
 
-            {/* রোল-ভিত্তিক নেভিগেশন লিঙ্কগুলি */}
-            {dashboardLinks.map((link) => (
-              <li key={link.path} className="mb-1">
-                <NavLink
-                  to={link.path}
-                  className={({ isActive }) =>
-                    `flex items-center space-x-3 p-3 rounded-lg transition duration-200 ${
-                      isActive
-                        ? "bg-green-500 text-white font-bold shadow-md"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    }`
-                  }
-                >
-                  {link.icon}
-                  <span className="ml-2">{link.label}</span>
+            <ul className="menu p-4">
+              {dashboardLinks.map((link) => (
+                <li key={link.path}>
+                  <NavLink
+                    to={link.path}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 rounded-lg p-3 transition ${
+                        isActive
+                          ? "bg-green-500 text-white font-semibold"
+                          : "hover:bg-gray-100"
+                      }`
+                    }
+                  >
+                    {link.icon}
+                    {link.label}
+                  </NavLink>
+                </li>
+              ))}
+
+              <div className="divider"></div>
+
+              <li>
+                <NavLink to="/" className="flex items-center gap-3 p-3">
+                  <FaHome />
+                  Back to Home
                 </NavLink>
               </li>
-            ))}
-
-            {/* মূল সাইটে ফেরার জন্য একটি লিঙ্ক */}
-            <div className="divider my-4 border-t border-gray-200 dark:border-gray-700"></div>
-            <li>
-              <NavLink
-                to="/"
-                className="text-gray-500 hover:text-green-500 p-3 rounded-lg"
-              >
-                <FaHome />
-                <span className="ml-2">Go back to Home Page</span>
-              </NavLink>
-            </li>
-          </ul>
+            </ul>
+          </aside>
         </div>
       </div>
 
-      {/* ৩. ফুটার */}
+      {/* Footer */}
       <Footer />
     </div>
   );

@@ -6,7 +6,8 @@ import Login from "../Pages/Login";
 import AllProductsPage from "../Pages/AllProductsPage";
 import ProductDetailsPage from "../Pages/ProductDetailsPage";
 import DashboardLayout from "../Layouts/DashboardLayout";
-import RoleBasedRoute from "./RoleBasedRoute"; // ✨ আপনার তৈরি করা রোল-ভিত্তিক রুট কম্পোনেন্ট
+import RoleBasedRoute from "./RoleBasedRoute";
+import NotFound from "../Pages/NotFound";
 
 // ড্যাশবোর্ড পেজ ইম্পোর্ট
 // import MyOrders from "../Pages/Dashboard/Buyer/MyOrders";
@@ -25,7 +26,7 @@ export const router = createBrowserRouter([
     path: "/",
     element: <MainLayout />,
     // অ্যাসাইনমেন্টের প্রয়োজনীয়তা অনুসারে একটি 404 পেজ (NotFound কম্পোনেন্ট)
-    errorElement: <div>404 Not Found</div>,
+    errorElement: <NotFound />,
     children: [
       {
         index: true,

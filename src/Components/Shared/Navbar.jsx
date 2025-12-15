@@ -1,75 +1,130 @@
-import { useContext, useState } from "react";
-import { Link } from "react-router-dom";
-import { AuthContext } from "../../Context/AuthProvider";
+import { useEffect, useState } from "react";
+import { useAuth } from "../../Context/AuthProvider";
 import { CiMenuFries } from "react-icons/ci";
 import { IoMdClose } from "react-icons/io";
+import MyLink from "../Shared/MyLink";
+import Container from "../Shared/Container";
+import { Link } from "react-router";
 
 const Navbar = () => {
-  const { user, logOut } = useContext(AuthContext);
+  const { user, userRole, logOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleLogout = () => {
-    logOut().catch((err) => console.log(err));
+    logOut().catch((err) => console.error(err));
   };
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
 
+  useEffect(() => {
+    const html = document.querySelector("html");
+    html.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+  const handleTheme = (checked) => {
+    setTheme(checked ? "dark" : "light");
+  };
   const closeMenu = () => setIsOpen(false);
+
+  // Role-based Dashboard Links
+  const renderDashboardLinks = () => {
+    if (!userRole) return null;
+
+    switch (userRole) {
+      case "admin":
+        return (
+          <li>
+            <MyLink to="/dashboard/manage-users" onClick={closeMenu}>
+              Admin Dashboard
+            </MyLink>
+          </li>
+        );
+      case "manager":
+        return (
+          <li>
+            <MyLink to="/dashboard/manage-products" onClick={closeMenu}>
+              Manager Dashboard
+            </MyLink>
+          </li>
+        );
+      case "buyer":
+        return (
+          <li>
+            <MyLink to="/dashboard/my-orders" onClick={closeMenu}>
+              My Orders
+            </MyLink>
+          </li>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <header className="bg-white shadow-md sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 relative">
+      <Container className="relative">
         <nav className="flex justify-between items-center h-16">
-          {/* ✅ Logo */}
-          <Link to="/" className="text-2xl font-bold text-green-600">
+          {/* Logo */}
+          <Link
+            to="/"
+            className="text-2xl font-bold text-green-600 hover:text-blue-700"
+          >
             Garments Tracker
           </Link>
 
-          {/* ✅ Desktop Menu */}
-          <ul className="hidden md:flex items-center space-x-6 font-medium">
+          {/* Desktop Menu */}
+          <ul className="hidden md:flex items-center space-x-6 font-medium text-blue-900">
             <li>
-              <Link to="/" className="hover:text-green-600">
+              <MyLink to="/" onClick={closeMenu}>
                 Home
-              </Link>
+              </MyLink>
             </li>
             <li>
-              <Link to="/all-products" className="hover:text-green-600">
+              <MyLink to="/all-products" onClick={closeMenu}>
                 All-Products
-              </Link>
+              </MyLink>
             </li>
 
             {!user ? (
               <>
                 <li>
-                  <Link to="/about-us" className="hover:text-green-600">
+                  <MyLink to="/about-us" onClick={closeMenu}>
                     About Us
-                  </Link>
+                  </MyLink>
                 </li>
                 <li>
-                  <Link to="/contact" className="hover:text-green-600">
+                  <MyLink to="/contact" onClick={closeMenu}>
                     Contact
-                  </Link>
+                  </MyLink>
                 </li>
                 <li>
-                  <Link to="/login" className="hover:text-green-600">
+                  <MyLink
+                    to="/login"
+                    onClick={closeMenu}
+                    className="text-green-600"
+                  >
                     Login
-                  </Link>
+                  </MyLink>
                 </li>
                 <li>
-                  <Link
+                  <MyLink
                     to="/register"
-                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                    onClick={closeMenu}
+                    className="text-red-600  px-4 py-2 rounded hover:bg-green-700"
                   >
                     Register
-                  </Link>
+                  </MyLink>
                 </li>
+                <input
+                  onChange={(e) => handleTheme(e.target.checked)}
+                  type="checkbox"
+                  defaultChecked={localStorage.getItem("theme") === "dark"}
+                  className="toggle"
+                />
               </>
             ) : (
               <>
-                <li>
-                  <Link to="/dashboard" className="hover:text-green-600">
-                    Dashboard
-                  </Link>
-                </li>
-                <li>
+                {renderDashboardLinks()}
+                <li className="flex items-center gap-2">
                   <img
                     src={
                       user?.photoURL ||
@@ -78,6 +133,7 @@ const Navbar = () => {
                     alt="User"
                     className="w-10 h-10 rounded-full object-cover border"
                   />
+                  <span>{user?.displayName || "User"}</span>
                 </li>
                 <li>
                   <button
@@ -91,7 +147,7 @@ const Navbar = () => {
             )}
           </ul>
 
-          {/* ✅ Mobile Menu Button */}
+          {/* Mobile Menu Button */}
           <button
             className="md:hidden text-3xl"
             onClick={() => setIsOpen(!isOpen)}
@@ -100,7 +156,7 @@ const Navbar = () => {
           </button>
         </nav>
 
-        {/* ✅ Mobile Menu */}
+        {/* Mobile Menu */}
         <div
           className={`md:hidden absolute left-0 top-16 w-full bg-white shadow-md transition-all duration-300 ${
             isOpen
@@ -110,54 +166,50 @@ const Navbar = () => {
         >
           <ul className="flex flex-col p-4 space-y-3 font-medium">
             <li>
-              <Link to="/" onClick={closeMenu}>
+              <MyLink to="/" onClick={closeMenu}>
                 Home
-              </Link>
+              </MyLink>
             </li>
             <li>
-              <Link to="/all-products" onClick={closeMenu}>
+              <MyLink to="/all-products" onClick={closeMenu}>
                 All-Products
-              </Link>
+              </MyLink>
             </li>
 
             {!user ? (
               <>
                 <li>
-                  <Link to="/about-us" onClick={closeMenu}>
+                  <MyLink to="/about-us" onClick={closeMenu}>
                     About Us
-                  </Link>
+                  </MyLink>
                 </li>
                 <li>
-                  <Link to="/contact" onClick={closeMenu}>
+                  <MyLink to="/contact" onClick={closeMenu}>
                     Contact
-                  </Link>
+                  </MyLink>
                 </li>
                 <li>
-                  <Link
+                  <MyLink
                     to="/login"
                     onClick={closeMenu}
                     className="text-green-600"
                   >
                     Login
-                  </Link>
+                  </MyLink>
                 </li>
                 <li>
-                  <Link
+                  <MyLink
                     to="/register"
                     onClick={closeMenu}
                     className="bg-green-600 text-white text-center py-2 rounded"
                   >
                     Register
-                  </Link>
+                  </MyLink>
                 </li>
               </>
             ) : (
               <>
-                <li>
-                  <Link to="/dashboard" onClick={closeMenu}>
-                    Dashboard
-                  </Link>
-                </li>
+                {renderDashboardLinks()}
                 <li className="flex items-center gap-3">
                   <img
                     src={
@@ -184,7 +236,7 @@ const Navbar = () => {
             )}
           </ul>
         </div>
-      </div>
+      </Container>
     </header>
   );
 };
