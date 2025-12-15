@@ -11,6 +11,7 @@ import {
   FaHome,
   FaUserSlash,
 } from "react-icons/fa";
+import DashboardSidebar from "../Pages/Dashboard/Shared/DashboardSidebar";
 
 /* ===========================
    Role Based Dashboard Links
@@ -141,9 +142,10 @@ const DashboardLayout = () => {
         </div>
 
         {/* Sidebar */}
+
         <div className="drawer-side">
           <label htmlFor="dashboard-drawer" className="drawer-overlay"></label>
-
+          <DashboardSidebar />
           <aside className="w-64 min-h-full bg-white border-r shadow-lg">
             <h2 className="text-xl font-bold text-center py-5 text-green-600 border-b">
               {userRole?.toUpperCase()} Dashboard
