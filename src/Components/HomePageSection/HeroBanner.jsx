@@ -1,5 +1,3 @@
-// src/components/Home/HeroBanner.jsx
-
 import React from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";

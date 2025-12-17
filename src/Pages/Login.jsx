@@ -1,11 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import {
-  FaEye,
-  FaSignInAlt,
-  FaEnvelope, // Email এর জন্য নতুন আইকন
-  FaLock, // Password এর জন্য নতুন আইকন
-} from "react-icons/fa";
+import { FaEye, FaSignInAlt, FaEnvelope, FaLock } from "react-icons/fa";
 import { IoEyeOff } from "react-icons/io5";
 import { FcGoogle } from "react-icons/fc";
 import { toast } from "react-toastify";
@@ -14,16 +9,16 @@ import { useAuth } from "../Context/AuthProvider";
 const Login = () => {
   const [show, setShow] = useState(false);
   const emailRef = useRef(null);
-  const { signIn, signInWithGoogle, resetPassword, setLoading, user, loading } =
-    useAuth();
+
+  const { signIn, signInWithGoogle, resetPassword, user, loading } = useAuth();
 
   const location = useLocation();
   const navigate = useNavigate();
   const from = location.state?.from || "/";
 
   useEffect(() => {
-    if (user) navigate(from);
-  }, [user, from, navigate]); // সাধারণ সাইন ইন হ্যান্ডলার
+    if (user) navigate(from, { replace: true });
+  }, [user, from, navigate]);
 
   const handleSignin = async (e) => {
     e.preventDefault();
@@ -31,15 +26,14 @@ const Login = () => {
     const password = e.target.password.value;
 
     if (!email || !password) {
-      toast.error("অনুগ্রহ করে ইমেল এবং পাসওয়ার্ড লিখুন।");
+      toast.error("ইমেল এবং পাসওয়ার্ড দিন");
       return;
     }
 
     try {
-      setLoading(true);
       await signIn(email, password);
-      toast.success("লগইন সফল হয়েছে!");
-      navigate(from);
+      toast.success("লগইন সফল হয়েছে");
+      navigate(from, { replace: true });
     } catch (error) {
       toast.error(
         error.message
@@ -47,153 +41,107 @@ const Login = () => {
           .replace(").", "")
           .replaceAll("-", " ")
       );
-    } finally {
-      setLoading(false);
     }
-  }; // Google সাইন ইন হ্যান্ডলার
+  };
 
   const handleGoogleSignin = async () => {
     try {
-      setLoading(true);
       await signInWithGoogle();
-      toast.success("Google Login Successful!");
-      navigate(from);
+      toast.success("Google Login Successful");
+      navigate(from, { replace: true });
     } catch (error) {
-      toast.error(
-        error.message
-          .replace("Firebase: Error (auth/", "")
-          .replace(").", "")
-          .replaceAll("-", " ")
-      );
-    } finally {
-      setLoading(false);
+      toast.error(error.message);
     }
   };
 
   const handleForgetPassword = async () => {
     const email = emailRef.current?.value.trim();
     if (!email) {
-      toast.error("পাসওয়ার্ড রিসেট করতে ইমেল লিখুন।");
+      toast.error("ইমেল লিখুন");
       return;
     }
+
     try {
-      setLoading(true);
       await resetPassword(email);
-      toast.success("পাসওয়ার্ড রিসেট লিংক আপনার ইমেলে পাঠানো হয়েছে।");
+      toast.success("রিসেট লিংক পাঠানো হয়েছে");
     } catch (error) {
-      toast.error(
-        error.message
-          .replace("Firebase: Error (auth/", "")
-          .replace(").", "")
-          .replaceAll("-", " ")
-      );
-    } finally {
-      setLoading(false);
+      toast.error(error.message);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-      {" "}
-      <div className="w-full max-w-md">
-        {" "}
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl border border-green-300 dark:border-green-700/50">
-          {" "}
-          <h2 className="text-3xl font-bold text-center text-green-700 dark:text-green-400 mb-6 flex items-center justify-center gap-2">
-            {" "}
-            <FaSignInAlt className="text-green-500 dark:text-green-400" />{" "}
-            Welcome Back!{" "}
-          </h2>{" "}
-          <form onSubmit={handleSignin} className="space-y-4">
-            {/* Email Input Field */}{" "}
-            <div>
-              {" "}
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                {" "}
-                <FaEnvelope className="inline mr-2 text-green-500" /> Email{" "}
-              </label>{" "}
-              <input
-                type="email"
-                ref={emailRef}
-                name="email"
-                placeholder="example@email.com"
-                className="mt-1 w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition text-gray-900 dark:text-white"
-                required
-              />{" "}
-            </div>
-            {/* Password Input Field */}{" "}
-            <div className="relative">
-              {" "}
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                {" "}
-                <FaLock className="inline mr-2 text-green-500" /> Password{" "}
-              </label>{" "}
-              <input
-                type={show ? "text" : "password"}
-                name="password"
-                placeholder="••••••••"
-                className="mt-1 w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition text-gray-900 dark:text-white"
-                required
-              />{" "}
-              <span
-                onClick={() => setShow(!show)}
-                className="absolute right-3 top-1/2 transform translate-y-2 cursor-pointer text-green-600 dark:text-green-400 text-lg"
-              >
-                {show ? <IoEyeOff /> : <FaEye />}{" "}
-              </span>{" "}
-            </div>
-            {/* Forgot Password Button */}{" "}
-            <button
-              type="button"
-              onClick={handleForgetPassword}
-              className="text-sm text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 hover:underline cursor-pointer block text-left pt-1"
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-xl">
+        <h2 className="text-3xl font-bold text-center text-green-700 mb-6 flex justify-center gap-2">
+          <FaSignInAlt /> Login
+        </h2>
+
+        <form onSubmit={handleSignin} className="space-y-4">
+          <div>
+            <label className="text-sm font-medium">
+              <FaEnvelope className="inline mr-2" />
+              Email
+            </label>
+            <input
+              ref={emailRef}
+              type="email"
+              name="email"
+              className="w-full mt-1 px-4 py-2 border rounded"
+              required
+            />
+          </div>
+
+          <div className="relative">
+            <label className="text-sm font-medium">
+              <FaLock className="inline mr-2" />
+              Password
+            </label>
+            <input
+              type={show ? "text" : "password"}
+              name="password"
+              className="w-full mt-1 px-4 py-2 border rounded"
+              required
+            />
+            <span
+              onClick={() => setShow(!show)}
+              className="absolute right-3 top-9 cursor-pointer"
             >
-              Forgot Password?{" "}
-            </button>
-            {/* Submit Button */}{" "}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 px-4 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition shadow-md disabled:bg-green-400"
-            >
-              {loading ? "Processing..." : "Sign In"}{" "}
-            </button>{" "}
-            <div className="mt-5 border-t border-gray-200 dark:border-gray-600 pt-5">
-              {" "}
-              <div className="flex items-center justify-center gap-2 mb-4">
-                {" "}
-                <div className="h-px w-full bg-gray-200 dark:bg-gray-600"></div>{" "}
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  OR
-                </span>{" "}
-                <div className="h-px w-full bg-gray-200 dark:bg-gray-600"></div>{" "}
-              </div>{" "}
-              <button
-                type="button"
-                onClick={handleGoogleSignin}
-                disabled={loading}
-                className="w-full flex items-center justify-center py-2 px-4 mb-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-base font-medium text-gray-700 dark:text-white bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
-              >
-                <FcGoogle className="mr-3 text-lg" />
-                Sign in with Google{" "}
-              </button>{" "}
-            </div>
-            {/* Registration Link */}{" "}
-            <div className="text-center mt-3">
-              {" "}
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Don’t have an account?{" "}
-                <Link
-                  to="/register"
-                  className="text-green-600 dark:text-green-400 hover:underline font-medium ml-1"
-                >
-                  Register Here{" "}
-                </Link>{" "}
-              </p>{" "}
-            </div>{" "}
-          </form>{" "}
-        </div>{" "}
-      </div>{" "}
+              {show ? <IoEyeOff /> : <FaEye />}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleForgetPassword}
+            className="text-sm text-green-600"
+          >
+            Forgot Password?
+          </button>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-green-600 text-white py-2 rounded"
+          >
+            {loading ? "Processing..." : "Login"}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleGoogleSignin}
+            className="w-full flex items-center justify-center gap-2 border py-2 rounded"
+          >
+            <FcGoogle /> Login with Google
+          </button>
+
+          <p className="text-center text-sm">
+            New here?
+            <Link to="/register" className="text-green-600 ml-1">
+              Register
+            </Link>
+          </p>
+        </form>
+      </div>
     </div>
   );
 };

@@ -100,7 +100,7 @@ const Navbar = () => {
                   <MyLink
                     to="/login"
                     onClick={closeMenu}
-                    className="text-green-600"
+                    className="text-green-600 btn btn-outline hover:bg-green-700 hover:text-white"
                   >
                     Login
                   </MyLink>
@@ -109,7 +109,7 @@ const Navbar = () => {
                   <MyLink
                     to="/register"
                     onClick={closeMenu}
-                    className="text-red-600  px-4 py-2 rounded hover:bg-green-700"
+                    className="text-red-600 btn btn-outline  px-4 py-2 rounded hover:bg-green-700 hover:text-white"
                   >
                     Register
                   </MyLink>

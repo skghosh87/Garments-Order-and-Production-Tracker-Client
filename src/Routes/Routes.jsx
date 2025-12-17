@@ -10,22 +10,24 @@ import RoleBasedRoute from "./RoleBasedRoute";
 import NotFound from "../Pages/NotFound";
 
 // ড্যাশবোর্ড পেজ ইম্পোর্ট
-// import MyOrders from "../Pages/Dashboard/Buyer/MyOrders";
+import MyOrders from "../Pages/Dashboard/Buyer/MyOrders";
 // import TrackOrder from "../Pages/Dashboard/Buyer/TrackOrder";
-// import ManageUsers from "../Pages/Dashboard/Admin/ManageUsers";
+import ManageUsers from "../Pages/Dashboard/Admin/ManageUsers";
 // import AdminAllProducts from "../Pages/Dashboard/Admin/AdminAllProducts"; // Admin All Products
-// import AllOrders from "../Pages/Dashboard/Admin/AllOrders"; // Admin All Orders
-// import AddProduct from "../Pages/Dashboard/Manager/AddProduct";
-// import ManageProducts from "../Pages/Dashboard/Manager/ManageProducts";
-// import PendingOrders from "../Pages/Dashboard/Manager/PendingOrders";
-// import ApprovedOrders from "../Pages/Dashboard/Manager/ApprovedOrders";
+import AllOrders from "../Pages/Dashboard/Admin/AllOrders"; // Admin All Orders
+import AddProduct from "../Pages/Dashboard/Manager/AddProduct";
+import ManageProducts from "../Pages/Dashboard/Manager/ManageProducts";
+import PendingOrders from "../Pages/Dashboard/Manager/PendingOrders";
+import ApprovedOrders from "../Pages/Dashboard/Manager/ApprovedOrders";
+import AboutUs from "../Pages/AboutUs";
+import Contact from "../Pages/Contact";
 // import Profile from "../Pages/Dashboard/Shared/Profile"; // Shared Profile Page
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <MainLayout />,
-    // অ্যাসাইনমেন্টের প্রয়োজনীয়তা অনুসারে একটি 404 পেজ (NotFound কম্পোনেন্ট)
+
     errorElement: <NotFound />,
     children: [
       {
@@ -55,8 +57,8 @@ export const router = createBrowserRouter([
         ),
       },
       // About Us এবং Contact রুটগুলি যোগ করতে পারেন (যদি থাকে)
-      // { path: "about-us", element: <AboutUs /> },
-      // { path: "contact", element: <Contact /> },
+      { path: "about-us", element: <AboutUs /> },
+      { path: "contact", element: <Contact /> },
     ],
   },
 
@@ -71,15 +73,15 @@ export const router = createBrowserRouter([
     ),
     children: [
       // --- ১. বাইয়ার (Buyer) রুটস (Role: buyer) ---
-      // {
-      //   path: "my-orders",
-      //   element: (
-      //     <RoleBasedRoute allowedRoles={["buyer"]}>
-      //       {" "}
-      //       <MyOrders />{" "}
-      //     </RoleBasedRoute>
-      //   ),
-      // // },
+      {
+        path: "my-orders",
+        element: (
+          <RoleBasedRoute allowedRoles={["buyer"]}>
+            {" "}
+            <MyOrders />{" "}
+          </RoleBasedRoute>
+        ),
+      },
       // {
       //   path: "track-order",
       //   element: (
@@ -90,52 +92,52 @@ export const router = createBrowserRouter([
       //   ),
       // },
       // // --- ২. ম্যানেজার (Manager) রুটস (Role: manager) ---
-      // {
-      //   path: "add-product",
-      //   element: (
-      //     <RoleBasedRoute allowedRoles={["manager"]}>
-      //       {" "}
-      //       <AddProduct />{" "}
-      //     </RoleBasedRoute>
-      //   ),
-      // },
-      // {
-      //   path: "manage-products",
-      //   element: (
-      //     <RoleBasedRoute allowedRoles={["manager"]}>
-      //       {" "}
-      //       <ManageProducts />{" "}
-      //     </RoleBasedRoute>
-      //   ),
-      // },
-      // {
-      //   path: "pending-orders",
-      //   element: (
-      //     <RoleBasedRoute allowedRoles={["manager"]}>
-      //       {" "}
-      //       <PendingOrders />{" "}
-      //     </RoleBasedRoute>
-      //   ),
-      // },
-      // {
-      //   path: "approved-orders",
-      //   element: (
-      //     <RoleBasedRoute allowedRoles={["manager"]}>
-      //       {" "}
-      //       <ApprovedOrders />{" "}
-      //     </RoleBasedRoute>
-      //   ),
-      // },
+      {
+        path: "add-product",
+        element: (
+          <RoleBasedRoute allowedRoles={["manager"]}>
+            {" "}
+            <AddProduct />{" "}
+          </RoleBasedRoute>
+        ),
+      },
+      {
+        path: "manage-products",
+        element: (
+          <RoleBasedRoute allowedRoles={["manager"]}>
+            {" "}
+            <ManageProducts />{" "}
+          </RoleBasedRoute>
+        ),
+      },
+      {
+        path: "pending-orders",
+        element: (
+          <RoleBasedRoute allowedRoles={["manager"]}>
+            {" "}
+            <PendingOrders />{" "}
+          </RoleBasedRoute>
+        ),
+      },
+      {
+        path: "approved-orders",
+        element: (
+          <RoleBasedRoute allowedRoles={["manager"]}>
+            {" "}
+            <ApprovedOrders />{" "}
+          </RoleBasedRoute>
+        ),
+      },
       // // --- ৩. অ্যাডমিন (Admin) রুটস (Role: admin) ---
-      // {
-      //   path: "manage-users",
-      //   element: (
-      //     <RoleBasedRoute allowedRoles={["admin"]}>
-      //       {" "}
-      //       <ManageUsers />{" "}
-      //     </RoleBasedRoute>
-      //   ),
-      // },
+      {
+        path: "manage-users",
+        element: (
+          <RoleBasedRoute allowedRoles={["admin"]}>
+            {" "}
+            <ManageUsers />{" "}
+          </RoleBasedRoute>
+        ),
+      },
       // {
       //   path: "all-products", // ড্যাশবোর্ড/all-products (Admin-এর জন্য)
       //   element: (
@@ -145,15 +147,15 @@ export const router = createBrowserRouter([
       //     </RoleBasedRoute>
       //   ),
       // },
-      // {
-      //   path: "all-orders", // ড্যাশবোর্ড/all-orders (Admin-এর জন্য)
-      //   element: (
-      //     <RoleBasedRoute allowedRoles={["admin"]}>
-      //       {" "}
-      //       <AllOrders />{" "}
-      //     </RoleBasedRoute>
-      //   ),
-      // },
+      {
+        path: "all-orders", // ড্যাশবোর্ড/all-orders (Admin-এর জন্য)
+        element: (
+          <RoleBasedRoute allowedRoles={["admin"]}>
+            {" "}
+            <AllOrders />{" "}
+          </RoleBasedRoute>
+        ),
+      },
       // // --- ৪. শেয়ার্ড প্রোফাইল রুট (সকলের জন্য) ---
       // {
       //   // /dashboard/profile
@@ -168,8 +170,6 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // *404 Not Found Page Handled Globally*
-  // আপনি MainLayout-এ errorElement সেট করায় আলাদাভাবে 404 রুট দরকার নেই,
   // তবে চাইলে ওয়াইল্ডকার্ড ব্যবহার করা যেত:
-  // { path: "*", element: <NotFound /> },
+  { path: "*", element: <NotFound /> },
 ]);

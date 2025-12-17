@@ -1,21 +1,21 @@
-import React, { createContext, useState, useEffect, useContext } from "react";
+import React, { createContext, useEffect, useState, useContext } from "react";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInWithPopup,
   onAuthStateChanged,
   signOut,
   GoogleAuthProvider,
-  signInWithPopup,
   updateProfile,
   sendPasswordResetEmail,
 } from "firebase/auth";
 import { auth } from "../Firebase/firebase.config";
 import axios from "axios";
 
-// AuthContext তৈরি করা
 export const AuthContext = createContext(null);
 
 const googleProvider = new GoogleAuthProvider();
+const API = import.meta.env.VITE_SERVER_API;
 
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -25,107 +25,77 @@ const AuthProvider = ({ children }) => {
   const [userStatus, setUserStatus] = useState(null);
   const [isRoleLoading, setIsRoleLoading] = useState(true);
 
-  const createUser = (email, password) => {
-    setLoading(true);
-    return createUserWithEmailAndPassword(auth, email, password);
-  };
+  // ================= Auth Functions =================
+  const createUser = (email, password) =>
+    createUserWithEmailAndPassword(auth, email, password);
 
-  const signIn = (email, password) => {
-    setLoading(true);
-    return signInWithEmailAndPassword(auth, email, password);
-  };
+  const signIn = (email, password) =>
+    signInWithEmailAndPassword(auth, email, password);
 
-  const signInWithGoogle = () => {
-    setLoading(true);
-    return signInWithPopup(auth, googleProvider);
-  };
+  const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
 
-  const updateUserProfile = (displayName, photoURL) => {
-    return updateProfile(auth.currentUser, { displayName, photoURL });
-  };
+  const updateUserProfile = (name, photo) =>
+    updateProfile(auth.currentUser, {
+      displayName: name,
+      photoURL: photo,
+    });
 
-  const resetPassword = (email) => {
-    setLoading(true);
-    return sendPasswordResetEmail(auth, email);
-  };
+  const resetPassword = (email) => sendPasswordResetEmail(auth, email);
 
-  const logOut = () => {
-    setLoading(true);
-
-    return axios
-      .post(
-        `${import.meta.env.VITE_SERVER_API}/api/v1/auth/logout`,
+  const logOut = async () => {
+    try {
+      await axios.post(
+        `${API}/api/v1/auth/logout`,
         {},
-        {
-          withCredentials: true,
-        }
-      )
-      .then(() => {
-        setUserRole(null);
-        setUserStatus(null);
-        setIsRoleLoading(false);
-        return signOut(auth);
-      })
-      .catch((error) => {
-        console.error(
-          "Error during logout process, forcing Firebase sign out:",
-          error
-        );
-
-        setUserRole(null);
-        setUserStatus(null);
-        setIsRoleLoading(false);
-        return signOut(auth);
-      });
-  };
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-
-      setLoading(true);
-      setIsRoleLoading(true);
+        { withCredentials: true }
+      );
+    } catch (err) {
+      console.error("Logout API failed:", err);
+    } finally {
+      setUser(null);
       setUserRole(null);
       setUserStatus(null);
+      await signOut(auth);
+    }
+  };
 
-      if (currentUser) {
+  // ================= Auth Observer =================
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      setLoading(true);
+      setIsRoleLoading(true);
+
+      if (!currentUser) {
+        setLoading(false);
+        setIsRoleLoading(false);
+        return;
+      }
+
+      try {
         const email = currentUser.email;
 
-        axios
-          .post(
-            `${import.meta.env.VITE_SERVER_API}/api/v1/auth/jwt`,
-            { email },
-            {
-              withCredentials: true,
-            }
-          )
-          .then(() => {
-            console.log("JWT Token set successfully.");
+        // 1️⃣ JWT
+        await axios.post(
+          `${API}/api/v1/auth/jwt`,
+          { email },
+          { withCredentials: true }
+        );
 
-            return axios.get(
-              `${import.meta.env.VITE_SERVER_API}/api/v1/users/role/${email}`
-            );
-          })
-          .then((roleRes) => {
-            const { role, status } = roleRes.data;
-            setUserRole(role);
-            setUserStatus(status);
+        // 2️⃣ Role
+        const res = await axios.get(`${API}/api/v1/users/role/${email}`, {
+          withCredentials: true,
+        });
 
-            setIsRoleLoading(false);
-            setLoading(false);
-          })
-          .catch((error) => {
-            console.error(
-              "Authentication chain failed (JWT or Role fetch):",
-              error
-            );
+        setUserRole(res.data.role);
+        setUserStatus(res.data.status);
+      } catch (error) {
+        console.error("JWT / Role fetch failed:", error);
 
-            signOut(auth).then(() => {
-              setLoading(false);
-              setIsRoleLoading(false);
-            });
-          });
-      } else {
+        // ❌ Firebase logout করবো না
+        setUserRole("buyer");
+        setUserStatus("active");
+      } finally {
         setLoading(false);
         setIsRoleLoading(false);
       }
@@ -135,28 +105,25 @@ const AuthProvider = ({ children }) => {
   }, []);
 
   const authInfo = {
-    createUser,
-    updateUserProfile,
-    signIn,
-    signInWithGoogle,
-    resetPassword,
-    logOut,
     user,
     loading,
     userRole,
     userStatus,
     isRoleLoading,
+    createUser,
+    signIn,
+    signInWithGoogle,
+    resetPassword,
+    updateUserProfile,
+    logOut,
+    setLoading,
   };
 
   return (
-    <AuthContext.Provider value={authInfo}>
-      {!loading && !isRoleLoading && children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={authInfo}>{children}</AuthContext.Provider>
   );
 };
 
 export default AuthProvider;
 
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+export const useAuth = () => useContext(AuthContext);
