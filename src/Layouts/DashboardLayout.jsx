@@ -1,91 +1,12 @@
-import { Outlet, NavLink } from "react-router-dom";
-
+import { Outlet } from "react-router-dom";
 import Navbar from "../Components/Shared/Navbar";
 import Footer from "../Components/Shared/Footer";
-import {
-  FaUserShield,
-  FaProductHunt,
-  FaClipboardList,
-  FaUserEdit,
-  FaSpinner,
-  FaHome,
-  FaUserSlash,
-} from "react-icons/fa";
+import { FaSpinner, FaUserSlash } from "react-icons/fa";
 import DashboardSidebar from "../Pages/Dashboard/Shared/DashboardSidebar";
 import useAuth from "../hooks/useAuth";
 
-/* ===========================
-   Role Based Dashboard Links
-=========================== */
-const getDashboardLinks = (role) => {
-  switch (role) {
-    case "admin":
-      return [
-        {
-          path: "manage-users",
-          icon: <FaUserShield />,
-          label: "Manage Users",
-        },
-        {
-          path: "manage-orders",
-          icon: <FaClipboardList />,
-          label: "All Orders",
-        },
-        {
-          path: "profile",
-          icon: <FaUserEdit />,
-          label: "My Profile",
-        },
-      ];
-
-    case "manager":
-      return [
-        {
-          path: "add-product",
-          icon: <FaProductHunt />,
-          label: "Add Product",
-        },
-        {
-          path: "manage-products",
-          icon: <FaProductHunt />,
-          label: "Manage Products",
-        },
-        {
-          path: "pending-orders",
-          icon: <FaClipboardList />,
-          label: "Pending Orders",
-        },
-        {
-          path: "approved-orders",
-          icon: <FaClipboardList />,
-          label: "Approved Orders",
-        },
-        {
-          path: "profile",
-          icon: <FaUserEdit />,
-          label: "My Profile",
-        },
-      ];
-
-    case "buyer":
-    default:
-      return [
-        {
-          path: "my-orders",
-          icon: <FaClipboardList />,
-          label: "My Orders",
-        },
-        {
-          path: "profile",
-          icon: <FaUserEdit />,
-          label: "My Profile",
-        },
-      ];
-  }
-};
-
 const DashboardLayout = () => {
-  const { user, userRole, userStatus, loading } = useAuth();
+  const { userStatus, loading } = useAuth();
 
   /* Loading State */
   if (loading) {
@@ -113,8 +34,6 @@ const DashboardLayout = () => {
     );
   }
 
-  const dashboardLinks = getDashboardLinks(userRole);
-
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
       {/* Navbar */}
@@ -128,8 +47,9 @@ const DashboardLayout = () => {
           className="drawer-toggle"
         />
 
-        {/* Main Content */}
+        {/* Main Content Area */}
         <div className="drawer-content p-4 md:p-6">
+          {/* Mobile Menu Button */}
           <label
             htmlFor="dashboard-drawer"
             className="btn btn-success btn-sm drawer-button lg:hidden mb-4 text-white"
@@ -142,45 +62,14 @@ const DashboardLayout = () => {
           </main>
         </div>
 
-        {/* Sidebar */}
-
+        {/* Sidebar Area */}
         <div className="drawer-side">
           <label htmlFor="dashboard-drawer" className="drawer-overlay"></label>
+
+          {/* এখানেই সমস্যা ছিল। শুধু DashboardSidebar রাখলেই হবে, 
+              এর নিচে আলাদাভাবে <aside> ট্যাগ দিয়ে আবার কোড করার প্রয়োজন নেই।
+          */}
           <DashboardSidebar />
-          <aside className="w-64 min-h-full bg-white border-r shadow-lg">
-            <h2 className="text-xl font-bold text-center py-5 text-green-600 border-b">
-              {userRole?.toUpperCase()} Dashboard
-            </h2>
-
-            <ul className="menu p-4">
-              {dashboardLinks.map((link) => (
-                <li key={link.path}>
-                  <NavLink
-                    to={link.path}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 rounded-lg p-3 transition ${
-                        isActive
-                          ? "bg-green-500 text-white font-semibold"
-                          : "hover:bg-gray-100"
-                      }`
-                    }
-                  >
-                    {link.icon}
-                    {link.label}
-                  </NavLink>
-                </li>
-              ))}
-
-              <div className="divider"></div>
-
-              <li>
-                <NavLink to="/" className="flex items-center gap-3 p-3">
-                  <FaHome />
-                  Back to Home
-                </NavLink>
-              </li>
-            </ul>
-          </aside>
         </div>
       </div>
 

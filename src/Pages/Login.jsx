@@ -121,7 +121,7 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-green-600 text-white py-2 rounded"
+            className="w-full cursor-pointer bg-green-600 text-white py-2 rounded"
           >
             {loading ? "Processing..." : "Login"}
           </button>
@@ -129,7 +129,7 @@ const Login = () => {
           <button
             type="button"
             onClick={handleGoogleSignin}
-            className="w-full flex items-center justify-center gap-2 border py-2 rounded"
+            className="w-full cursor-pointer flex items-center justify-center gap-2 border py-2 rounded"
           >
             <FcGoogle /> Login with Google
           </button>

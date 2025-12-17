@@ -9,14 +9,14 @@ import { Link, useNavigate } from "react-router-dom";
 const Navbar = () => {
   const { user, userRole, logOut } = useAuth();
   const navigate = useNavigate();
-  const [isOpen, setIsOpen] = useState(false); // মোবাইল মেনু স্টেট
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // প্রোফাইল ড্রপডাউন স্টেট
+  const [isOpen, setIsOpen] = useState(false); // Mobile menu state
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Profile dropdown state
   const dropdownRef = useRef(null);
 
-  // থিম স্টেট
+  // Theme State
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
 
-  // ড্রপডাউনের বাইরে ক্লিক করলে বন্ধ করার লজিক
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -27,7 +27,7 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // থিম পরিবর্তন লজিক
+  // Theme change logic
   useEffect(() => {
     const html = document.querySelector("html");
     html.setAttribute("data-theme", theme);
@@ -49,7 +49,7 @@ const Navbar = () => {
     }
   };
 
-  // ড্যাশবোর্ড পাথ নির্ধারণ
+  // Determine Dashboard Path based on role
   const getDashboardPath = () => {
     if (userRole === "admin") return "/dashboard/manage-users";
     if (userRole === "manager") return "/dashboard/manage-products";
@@ -57,6 +57,7 @@ const Navbar = () => {
     return "/dashboard";
   };
 
+  // Requirement-based Conditional NavLinks
   const navLinks = (
     <>
       <li>
@@ -69,16 +70,28 @@ const Navbar = () => {
           All-Products
         </MyLink>
       </li>
-      <li>
-        <MyLink to="/about-us" onClick={() => setIsOpen(false)}>
-          About Us
-        </MyLink>
-      </li>
-      <li>
-        <MyLink to="/contact" onClick={() => setIsOpen(false)}>
-          Contact
-        </MyLink>
-      </li>
+
+      {/* Requirement Logic: If user is logged in, show Dashboard. Otherwise show About & Contact */}
+      {user ? (
+        <li>
+          <MyLink to={getDashboardPath()} onClick={() => setIsOpen(false)}>
+            Dashboard
+          </MyLink>
+        </li>
+      ) : (
+        <>
+          <li>
+            <MyLink to="/about-us" onClick={() => setIsOpen(false)}>
+              About Us
+            </MyLink>
+          </li>
+          <li>
+            <MyLink to="/contact" onClick={() => setIsOpen(false)}>
+              Contact
+            </MyLink>
+          </li>
+        </>
+      )}
     </>
   );
 
@@ -86,7 +99,7 @@ const Navbar = () => {
     <header className="bg-base-100 shadow-md sticky top-0 z-50 transition-colors duration-300">
       <Container>
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
+          {/* Logo - Always Left Side */}
           <Link
             to="/"
             className="text-xl md:text-2xl font-bold text-green-600 flex items-center gap-2"
@@ -101,7 +114,7 @@ const Navbar = () => {
               {navLinks}
             </ul>
 
-            {/* Actions: Theme & Profile */}
+            {/* Actions: Theme & User/Login */}
             <div className="flex items-center gap-4 border-l pl-6 border-gray-200">
               <input
                 onChange={(e) => handleTheme(e.target.checked)}
@@ -111,21 +124,23 @@ const Navbar = () => {
               />
 
               {!user ? (
+                /* Before Login Actions (Right Side) */
                 <div className="flex items-center gap-2">
                   <Link
                     to="/login"
-                    className="btn btn-sm btn-outline btn-success"
+                    className="btn btn-sm btn-outline btn-primary"
                   >
                     Login
                   </Link>
                   <Link
                     to="/register"
-                    className="btn btn-sm btn-success text-white"
+                    className="btn btn-sm btn-secondary text-white"
                   >
                     Register
                   </Link>
                 </div>
               ) : (
+                /* After Login Actions: User Avatar & Logout */
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -139,36 +154,24 @@ const Navbar = () => {
                             user?.photoURL ||
                             "https://i.ibb.co/2kRrFqG/default-avatar.png"
                           }
-                          alt="Profile"
+                          alt="User"
                         />
                       </div>
                     </div>
                   </button>
 
-                  {/* Dropdown Menu */}
+                  {/* Profile Dropdown */}
                   {isDropdownOpen && (
                     <div className="absolute right-0 mt-3 w-56 bg-base-100 rounded-xl shadow-2xl border border-base-200 p-2 animate-in fade-in zoom-in duration-200">
                       <div className="px-4 py-3 border-b border-base-200 mb-2">
                         <p className="text-sm font-bold truncate">
-                          {user?.displayName || "User"}
+                          {user?.displayName}
                         </p>
-                        <p className="text-xs text-base-content/60 truncate">
+                        <p className="text-xs opacity-60 truncate">
                           {user?.email}
                         </p>
-                        <span className="badge badge-success badge-xs mt-1 capitalize text-[10px]">
-                          {userRole}
-                        </span>
                       </div>
                       <ul className="space-y-1">
-                        <li>
-                          <Link
-                            to={getDashboardPath()}
-                            onClick={() => setIsDropdownOpen(false)}
-                            className="flex items-center px-4 py-2 hover:bg-base-200 rounded-lg transition-colors"
-                          >
-                            Dashboard
-                          </Link>
-                        </li>
                         <li>
                           <button
                             onClick={handleLogout}
@@ -185,7 +188,7 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Mobile Menu Button & Theme */}
+          {/* Mobile Actions: Menu & Theme Toggle */}
           <div className="flex md:hidden items-center gap-3">
             <input
               onChange={(e) => handleTheme(e.target.checked)}
@@ -208,7 +211,7 @@ const Navbar = () => {
             isOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
-          <div className="p-6">
+          <div className="p-6 h-full flex flex-col">
             <div className="flex justify-between items-center mb-8">
               <span className="text-xl font-bold text-green-600">Menu</span>
               <button onClick={() => setIsOpen(false)}>
@@ -216,39 +219,12 @@ const Navbar = () => {
               </button>
             </div>
 
-            {user && (
-              <div className="flex items-center gap-3 mb-8 p-3 bg-base-200 rounded-xl">
-                <img
-                  className="w-12 h-12 rounded-full border-2 border-green-500"
-                  src={
-                    user?.photoURL ||
-                    "https://i.ibb.co/2kRrFqG/default-avatar.png"
-                  }
-                  alt=""
-                />
-                <div className="overflow-hidden">
-                  <p className="font-bold truncate">{user?.displayName}</p>
-                  <p className="text-xs opacity-60 truncate">{user?.email}</p>
-                </div>
-              </div>
-            )}
-
-            <ul className="flex flex-col gap-4 font-medium">
+            <ul className="flex flex-col gap-4 font-medium flex-grow">
               {navLinks}
-              {user && (
-                <li>
-                  <Link
-                    to={getDashboardPath()}
-                    onClick={() => setIsOpen(false)}
-                    className="text-green-600 font-bold"
-                  >
-                    My Dashboard
-                  </Link>
-                </li>
-              )}
             </ul>
 
-            <div className="mt-10 pt-6 border-t border-base-200">
+            {/* Logout/Login Button at Bottom of Sidebar */}
+            <div className="mt-auto pt-6 border-t border-base-200">
               {!user ? (
                 <div className="flex flex-col gap-3">
                   <Link
@@ -269,7 +245,7 @@ const Navbar = () => {
               ) : (
                 <button
                   onClick={handleLogout}
-                  className="btn btn-error btn-outline w-full text-white"
+                  className="btn btn-error btn-outline w-full"
                 >
                   Logout
                 </button>
@@ -277,11 +253,12 @@ const Navbar = () => {
             </div>
           </div>
         </div>
-        {/* Overlay for Mobile Sidebar */}
+
+        {/* Overlay */}
         {isOpen && (
           <div
             onClick={() => setIsOpen(false)}
-            className="fixed inset-0 bg-black/50 z-50 md:hidden animate-fade-in"
+            className="fixed inset-0 bg-black/50 z-50 md:hidden"
           />
         )}
       </Container>

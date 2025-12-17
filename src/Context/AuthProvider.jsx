@@ -12,11 +12,9 @@ import {
 import { auth } from "../Firebase/firebase.config";
 import axios from "axios";
 
-// Context টি এক্সপোর্ট করুন
 export const AuthContext = createContext(null);
-
 const googleProvider = new GoogleAuthProvider();
-const API = import.meta.env.VITE_SERVER_API;
+const API = import.meta.env.VITE_SERVER_API || "http://localhost:5000";
 
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -25,7 +23,6 @@ const AuthProvider = ({ children }) => {
   const [userStatus, setUserStatus] = useState(null);
   const [isRoleLoading, setIsRoleLoading] = useState(true);
 
-  // ================= Auth Functions =================
   const createUser = (email, password) => {
     setLoading(true);
     return createUserWithEmailAndPassword(auth, email, password);
@@ -53,7 +50,6 @@ const AuthProvider = ({ children }) => {
   const logOut = async () => {
     setLoading(true);
     try {
-      // কুকি ক্লিয়ার করার জন্য সার্ভার কল
       await axios.post(
         `${API}/api/v1/auth/logout`,
         {},
@@ -70,7 +66,6 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  // ================= Auth Observer =================
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
@@ -80,23 +75,24 @@ const AuthProvider = ({ children }) => {
         try {
           const email = currentUser.email;
 
-          // ১. JWT এবং কুকি সেট করা
+          // ১. JWT সেট করা
           await axios.post(
             `${API}/api/v1/auth/jwt`,
             { email },
             { withCredentials: true }
           );
 
-          // ২. রোল ও স্ট্যাটাস ফেচ করা
+          // ২. ডাটাবেস থেকে রোল ও স্ট্যাটাস আনা
           const res = await axios.get(`${API}/api/v1/users/role/${email}`, {
             withCredentials: true,
           });
 
+          // ডাটাবেস থেকে আসা "Manager" এবং "verified" সেট করা
           setUserRole(res.data.role);
           setUserStatus(res.data.status);
         } catch (error) {
-          console.error("JWT/Role fetch failed:", error);
-          setUserRole("buyer");
+          console.error("Role fetch failed:", error);
+          setUserRole("Buyer"); // fallback
           setUserStatus("pending");
         } finally {
           setIsRoleLoading(false);

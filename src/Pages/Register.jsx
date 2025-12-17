@@ -4,19 +4,19 @@ import {
   FaGoogle,
   FaUserPlus,
   FaIdBadge,
-  FaUser, // Full Name এর জন্য
-  FaEnvelope, // Email এর জন্য
-  FaCamera, // Photo URL এর জন্য
-  FaLock, // Password এর জন্য
+  FaUser,
+  FaEnvelope,
+  FaCamera,
+  FaLock,
 } from "react-icons/fa";
 import { IoEyeOff } from "react-icons/io5";
 import { Link, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import axios from "axios"; // Axios ইম্পোর্ট করা হয়েছে
 
 import Container from "../Components/Shared/Container";
 import useAuth from "../hooks/useAuth";
-// import axios from "axios";
 
 const Register = () => {
   const {
@@ -56,11 +56,10 @@ const Register = () => {
 
     setPasswordError("");
 
-    const validationMessage =
-      "Password must be at least 6 characters long and include one uppercase and one lowercase letter.";
     const regExp = /^(?=.*[a-z])(?=.*[A-Z]).{6,}$/;
-
     if (!regExp.test(password)) {
+      const validationMessage =
+        "Password must be at least 6 characters long and include one uppercase and one lowercase letter.";
       setPasswordError(validationMessage);
       toast.error(validationMessage, { position: "top-center" });
       return;
@@ -68,15 +67,36 @@ const Register = () => {
 
     try {
       setLoading(true);
-      await createUser(email, password);
-      await updateUserProfile(name, photoURL); // TODO: MongoDB Integration (Next Step)
 
-      toast.success("Registration Successful! Please Login.", {
-        position: "top-center",
-      });
-      await logOut();
-      navigate("/login");
+      // ১. Firebase-এ ইউজার তৈরি করা
+      const result = await createUser(email, password);
+      await updateUserProfile(name, photoURL);
+
+      // ২. MongoDB-র জন্য ইউজার অবজেক্ট তৈরি (রোল বড় হাতের অক্ষরে করা হয়েছে)
+      const userInfo = {
+        name,
+        email,
+        role: role.charAt(0).toUpperCase() + role.slice(1),
+        photoURL,
+        status: "verified", // অথবা আপনার প্রয়োজন মতো 'pending' দিতে পারেন
+        createdAt: new Date(),
+      };
+
+      // ৩. আপনার ব্যাকএন্ডে ডেটা পাঠানো
+      const res = await axios.post(
+        "http://localhost:5000/api/v1/users",
+        userInfo
+      );
+
+      if (res.data.insertedId) {
+        toast.success("Account created and saved to database!", {
+          position: "top-center",
+        });
+        await logOut();
+        navigate("/login");
+      }
     } catch (error) {
+      console.error(error);
       const errorMessage = parseFirebaseError(error);
       toast.error(errorMessage, { position: "top-center" });
     } finally {
@@ -87,8 +107,22 @@ const Register = () => {
   const handleGoogleSignup = async () => {
     try {
       setLoading(true);
-      await signInWithGoogle(); // TODO: Save Google User to MongoDB with default role and status
-      toast.success("Google Sign-Up Successful! Please Login.", {
+      const result = await signInWithGoogle();
+      const user = result.user;
+
+      // গুগল ইউজারের তথ্য MongoDB-তে পাঠানো
+      const userInfo = {
+        name: user?.displayName,
+        email: user?.email,
+        role: "Buyer", // গুগল সাইন-আপের জন্য ডিফল্ট রোল
+        photoURL: user?.photoURL,
+        status: "verified",
+        createdAt: new Date(),
+      };
+
+      await axios.post("http://localhost:5000/api/v1/users", userInfo);
+
+      toast.success("Google Sign-Up Successful!", {
         position: "top-center",
       });
       await logOut();
@@ -105,27 +139,20 @@ const Register = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 dark:bg-gray-900">
-      {" "}
       <Container className="flex items-center justify-center">
-        {" "}
         <div className="w-full max-w-lg bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl border border-green-200 dark:border-green-700/50">
-          {" "}
           <h2 className="text-3xl font-bold text-center text-green-700 dark:text-green-400 mb-6 flex items-center justify-center gap-2">
-            {" "}
-            <FaUserPlus className="text-green-500 dark:text-green-400 text-3xl" />{" "}
-            Create Your Account{" "}
-          </h2>{" "}
+            <FaUserPlus className="text-green-500 dark:text-green-400 text-3xl" />
+            Create Your Account
+          </h2>
           <form onSubmit={handleSignup} className="space-y-4">
-            {/* Full Name */}{" "}
             <div>
-              {" "}
               <label
                 htmlFor="name"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
-                {" "}
-                <FaUser className="inline mr-2 text-green-500" /> Full Name{" "}
-              </label>{" "}
+                <FaUser className="inline mr-2 text-green-500" /> Full Name
+              </label>
               <input
                 id="name"
                 type="text"
@@ -133,18 +160,15 @@ const Register = () => {
                 placeholder="Your Name"
                 className="mt-1 w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition duration-150"
                 required
-              />{" "}
+              />
             </div>
-            {/* Email */}{" "}
             <div>
-              {" "}
               <label
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
-                {" "}
-                <FaEnvelope className="inline mr-2 text-green-500" /> Email{" "}
-              </label>{" "}
+                <FaEnvelope className="inline mr-2 text-green-500" /> Email
+              </label>
               <input
                 id="email"
                 type="email"
@@ -152,9 +176,8 @@ const Register = () => {
                 placeholder="example@email.com"
                 className="mt-1 w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition duration-150"
                 required
-              />{" "}
+              />
             </div>
-            {/* Role Dropdown */}
             <div>
               <label
                 htmlFor="role"
@@ -166,42 +189,36 @@ const Register = () => {
               <select
                 id="role"
                 name="role"
-                className="mt-1 w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white appearance-none transition duration-150"
+                className="mt-1 w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition duration-150"
                 required
               >
-                <option value="buyer">Buyer </option>
-                <option value="manager">Manager </option>
+                <option value="buyer">Buyer</option>
+                <option value="manager">Manager</option>
               </select>
             </div>
-            {/* Photo URL */}{" "}
             <div>
-              {" "}
               <label
                 htmlFor="photo"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
-                {" "}
                 <FaCamera className="inline mr-2 text-green-500" /> Photo URL
-                (Optional){" "}
-              </label>{" "}
+                (Optional)
+              </label>
               <input
                 id="photo"
                 type="text"
                 name="photo"
                 placeholder="Your photo URL"
                 className="mt-1 w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition duration-150"
-              />{" "}
+              />
             </div>
-            {/* Password */}{" "}
             <div className="relative">
-              {" "}
               <label
                 htmlFor="password"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
-                {" "}
-                <FaLock className="inline mr-2 text-green-500" /> Password{" "}
-              </label>{" "}
+                <FaLock className="inline mr-2 text-green-500" /> Password
+              </label>
               <input
                 id="password"
                 type={show ? "text" : "password"}
@@ -209,61 +226,57 @@ const Register = () => {
                 placeholder="••••••••"
                 className="mt-1 w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition duration-150"
                 required
-              />{" "}
+              />
               <span
                 onClick={() => setShow(!show)}
-                className="absolute right-3 top-1/2 mt-2 cursor-pointer text-green-600 dark:text-green-400 text-xl"
+                className="absolute right-3 top-[42px] cursor-pointer text-green-600 dark:text-green-400 text-xl"
               >
-                {show ? <IoEyeOff /> : <FaEye />}{" "}
-              </span>{" "}
-            </div>{" "}
+                {show ? <IoEyeOff /> : <FaEye />}
+              </span>
+            </div>
             {passwordError && (
               <p className="mt-1 text-sm text-red-600 font-medium dark:text-red-400">
-                {passwordError}{" "}
+                {passwordError}
               </p>
-            )}{" "}
+            )}
             <button
               type="submit"
-              className="w-full py-3 px-4 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition duration-300 shadow-md disabled:bg-green-400"
+              className="w-full py-3 px-4 cursor-pointer bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition duration-300 shadow-md"
             >
-              Register Account{" "}
-            </button>{" "}
+              Register Account
+            </button>
             <div className="mt-5 border-t border-gray-200 dark:border-gray-600 pt-5">
-              {" "}
               <div className="flex items-center justify-center gap-2 mb-4">
-                {" "}
-                <div className="h-px w-full bg-gray-200 dark:bg-gray-600"></div>{" "}
+                <div className="h-px w-full bg-gray-200 dark:bg-gray-600"></div>
                 <span className="text-sm text-gray-500 dark:text-gray-400">
                   OR
-                </span>{" "}
-                <div className="h-px w-full bg-gray-200 dark:bg-gray-600"></div>{" "}
-              </div>{" "}
+                </span>
+                <div className="h-px w-full bg-gray-200 dark:bg-gray-600"></div>
+              </div>
               <button
                 onClick={handleGoogleSignup}
                 type="button"
-                className="w-full flex items-center justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-base font-medium text-gray-700 dark:text-white bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition duration-150"
+                className="w-full cursor-pointer flex items-center justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-base font-medium text-gray-700 dark:text-white bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition duration-150"
               >
-                {" "}
                 <FaGoogle className="mr-3 text-red-500 text-xl" />
-                Sign up with Google{" "}
-              </button>{" "}
-            </div>{" "}
+                Sign up with Google
+              </button>
+            </div>
             <div className="text-center mt-3">
-              {" "}
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Already have an account?{" "}
+                Already have an account?
                 <Link
                   to="/login"
                   className="text-green-600 dark:text-green-400 hover:underline font-medium ml-1"
                 >
-                  Login Here{" "}
-                </Link>{" "}
-              </p>{" "}
-            </div>{" "}
-          </form>{" "}
-        </div>{" "}
+                  Login Here
+                </Link>
+              </p>
+            </div>
+          </form>
+        </div>
       </Container>
-      <ToastContainer />{" "}
+      <ToastContainer />
     </div>
   );
 };

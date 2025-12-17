@@ -2,8 +2,10 @@ import { useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { FaSpinner } from "react-icons/fa";
+import useAuth from "../../../hooks/useAuth";
 
 const AddProduct = () => {
+  const { user } = useAuth(); // ২. লগইন থাকা ইউজারকে গেট করুন
   const [loading, setLoading] = useState(false);
 
   const handleAddProduct = async (e) => {
@@ -12,6 +14,7 @@ const AddProduct = () => {
 
     const form = e.target;
 
+    // ৩. product অবজেক্টে addedBy ফিল্ডে ইউজারের ইমেল যুক্ত করা হয়েছে
     const product = {
       name: form.name.value,
       category: form.category.value,
@@ -20,6 +23,8 @@ const AddProduct = () => {
       description: form.description.value,
       image: form.image.value,
       status: "active",
+      addedBy: user?.email, // এটি নিশ্চিত করবে যে এই ইউজারই প্রোডাক্টটির মালিক
+      createdAt: new Date(),
     };
 
     try {
@@ -40,29 +45,31 @@ const AddProduct = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow-md">
-      <h1 className="text-2xl font-bold mb-6">Add New Product</h1>
+    <div className="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow-md border border-gray-100">
+      <h1 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-3">
+        Add New Product
+      </h1>
 
       <form onSubmit={handleAddProduct} className="space-y-4">
         {/* Product Name */}
-        <div>
+        <div className="form-control">
           <label className="label font-semibold">Product Name</label>
           <input
             type="text"
             name="name"
             required
-            className="input input-bordered w-full"
+            className="input input-bordered w-full focus:outline-green-500"
             placeholder="Cotton T-Shirt"
           />
         </div>
 
         {/* Category */}
-        <div>
+        <div className="form-control">
           <label className="label font-semibold">Category</label>
           <select
             name="category"
             required
-            className="select select-bordered w-full"
+            className="select select-bordered w-full focus:outline-green-500"
           >
             <option value="">Select Category</option>
             <option value="t-shirt">T-Shirt</option>
@@ -74,57 +81,58 @@ const AddProduct = () => {
 
         {/* Price & MOQ */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
+          <div className="form-control">
             <label className="label font-semibold">Price (per unit)</label>
             <input
               type="number"
               name="price"
               required
               min="1"
-              className="input input-bordered w-full"
+              className="input input-bordered w-full focus:outline-green-500"
             />
           </div>
 
-          <div>
+          <div className="form-control">
             <label className="label font-semibold">Minimum Order Qty</label>
             <input
               type="number"
               name="minOrderQty"
               required
               min="1"
-              className="input input-bordered w-full"
+              className="input input-bordered w-full focus:outline-green-500"
             />
           </div>
         </div>
 
         {/* Image URL */}
-        <div>
+        <div className="form-control">
           <label className="label font-semibold">Product Image URL</label>
           <input
             type="url"
             name="image"
             required
-            className="input input-bordered w-full"
-            placeholder="https://..."
+            className="input input-bordered w-full focus:outline-green-500"
+            placeholder="https://example.com/image.jpg"
           />
         </div>
 
         {/* Description */}
-        <div>
+        <div className="form-control">
           <label className="label font-semibold">Description</label>
           <textarea
             name="description"
             rows="4"
             required
-            className="textarea textarea-bordered w-full"
+            className="textarea textarea-bordered w-full focus:outline-green-500"
             placeholder="Product details..."
           ></textarea>
         </div>
 
-        {/* Submit */}
+        {/* Submit Button */}
         <button
           disabled={loading}
-          className="btn btn-success w-full text-white"
+          type="submit"
+          className="btn btn-success w-full text-white shadow-md hover:bg-green-700 transition-colors cursor-pointer"
         >
           {loading ? (
             <FaSpinner className="animate-spin text-lg" />

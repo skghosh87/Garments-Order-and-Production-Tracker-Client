@@ -88,7 +88,7 @@ const CustomerFeedback = () => {
           {reviews.map((review, i) => (
             <SwiperSlide key={i}>
               {/* কার্ডের উচ্চতা কমিয়ে h-[350px] করা হয়েছে */}
-              <div className="bg-base-200 p-6 rounded-2xl shadow-sm border border-base-300 h-[350px] flex flex-col hover:shadow-lg transition-all duration-300 group">
+              <div className="bg-base-200 p-6 rounded-2xl shadow-sm border border-base-300 h-[250x] flex flex-col hover:shadow-lg transition-all duration-300 group">
                 {/* প্রোফাইল অংশ */}
                 <div className="flex items-center gap-3 mb-4">
                   <img
