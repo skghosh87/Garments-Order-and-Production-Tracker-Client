@@ -21,7 +21,7 @@ import PendingOrders from "../Pages/Dashboard/Manager/PendingOrders";
 import ApprovedOrders from "../Pages/Dashboard/Manager/ApprovedOrders";
 import AboutUs from "../Pages/AboutUs";
 import Contact from "../Pages/Contact";
-// import Profile from "../Pages/Dashboard/Shared/Profile"; // Shared Profile Page
+import Profile from "../Pages/Dashboard/Shared/Profile";
 
 export const router = createBrowserRouter([
   {
@@ -157,16 +157,16 @@ export const router = createBrowserRouter([
         ),
       },
       // // --- ৪. শেয়ার্ড প্রোফাইল রুট (সকলের জন্য) ---
-      // {
-      //   // /dashboard/profile
-      //   path: "profile",
-      //   element: (
-      //     <RoleBasedRoute allowedRoles={["admin", "manager", "buyer"]}>
-      //       {" "}
-      //       <Profile />{" "}
-      //     </RoleBasedRoute>
-      //   ),
-      // },
+      {
+        // /dashboard/profile
+        path: "profile",
+        element: (
+          <RoleBasedRoute allowedRoles={["admin", "manager", "buyer"]}>
+            {" "}
+            <Profile />{" "}
+          </RoleBasedRoute>
+        ),
+      },
     ],
   },
 

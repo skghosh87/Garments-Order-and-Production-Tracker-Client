@@ -12,14 +12,23 @@ const ManageProducts = () => {
 
   const API_URL = import.meta.env.VITE_SERVER_API;
 
-  /* ================= Fetch All Products ================= */
+  /* ================= Fetch All Products with Filtering ================= */
   const fetchProducts = async () => {
     setLoading(true);
     try {
       const res = await axios.get(`${API_URL}/api/v1/products`, {
         withCredentials: true,
       });
-      setProducts(res.data);
+
+      // লজিক: অ্যাডমিন হলে সব দেখাবে, না হলে শুধু নিজের ইমেইলের প্রোডাক্ট ফিল্টার করবে
+      if (userRole === "admin") {
+        setProducts(res.data);
+      } else {
+        const myProducts = res.data.filter(
+          (product) => product.addedBy === user?.email
+        );
+        setProducts(myProducts);
+      }
     } catch (err) {
       console.error("Fetch Error:", err);
     } finally {
@@ -28,8 +37,11 @@ const ManageProducts = () => {
   };
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    // ইউজার ডাটা লোড হওয়ার পর ফেচ শুরু হবে
+    if (user?.email || userRole) {
+      fetchProducts();
+    }
+  }, [user?.email, userRole]);
 
   /* ================= Delete Product ================= */
   const handleDelete = async (id) => {
@@ -100,15 +112,20 @@ const ManageProducts = () => {
   return (
     <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Manage Products</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Manage Products</h1>
+          <p className="text-sm text-gray-500">
+            {userRole === "admin" ? "Viewing all items" : "Viewing your items"}
+          </p>
+        </div>
         <p className="text-sm text-gray-500 font-medium">
-          Total Products: {products.length}
+          Total: {products.length}
         </p>
       </div>
 
       {products.length === 0 ? (
-        <div className="text-center py-10 text-gray-500">
-          No products found.
+        <div className="text-center py-10 text-gray-500 italic">
+          No products found for your account.
         </div>
       ) : (
         <div className="overflow-x-auto">
@@ -156,7 +173,7 @@ const ManageProducts = () => {
                     </span>
                   </td>
                   <td className="flex justify-center gap-3">
-                    {/* কন্ডিশনাল রেন্ডারিং: অ্যাডমিন অথবা ওনার হলে বাটন দেখাবে */}
+                    {/* সিকিউরিটি চেক: শুধু মালিক বা অ্যাডমিন এডিট/ডিলিট করতে পারবে */}
                     {userRole === "admin" || product.addedBy === user?.email ? (
                       <>
                         <button
@@ -164,20 +181,20 @@ const ManageProducts = () => {
                             setSelectedProduct(product);
                             document.getElementById("edit_modal").showModal();
                           }}
-                          className="btn btn-sm btn-circle btn-info text-white shadow-sm cursor-pointer"
+                          className="btn btn-sm btn-circle btn-info text-white shadow-sm cursor-pointer hover:scale-110 transition-transform"
                         >
                           <FaEdit />
                         </button>
                         <button
                           onClick={() => handleDelete(product._id)}
-                          className="btn btn-sm btn-circle btn-error text-white shadow-sm cursor-pointer"
+                          className="btn btn-sm btn-circle btn-error text-white shadow-sm cursor-pointer hover:scale-110 transition-transform"
                         >
                           <FaTrash />
                         </button>
                       </>
                     ) : (
                       <span className="text-xs text-gray-400 italic">
-                        No Access
+                        View Only
                       </span>
                     )}
                   </td>
@@ -188,9 +205,8 @@ const ManageProducts = () => {
         </div>
       )}
 
-      {/* Edit Modal (আগের মতোই থাকবে) */}
+      {/* Edit Modal */}
       <dialog id="edit_modal" className="modal modal-bottom sm:modal-middle">
-        {/* Modal content... (আগের কোডটি এখানে থাকবে) */}
         <div className="modal-box max-w-lg">
           <div className="flex justify-between items-center border-b pb-3 mb-4">
             <h3 className="font-bold text-lg">Update Product Info</h3>
@@ -203,7 +219,6 @@ const ManageProducts = () => {
 
           {selectedProduct && (
             <form onSubmit={handleUpdate} className="space-y-4">
-              {/* Form Inputs (Name, Image, Price, Category, Description) */}
               <div className="form-control">
                 <label className="label font-semibold">Product Name</label>
                 <input
@@ -214,7 +229,54 @@ const ManageProducts = () => {
                   required
                 />
               </div>
-              {/* ... (বাকি ইনপুটগুলো আগের মতো যোগ করুন) ... */}
+
+              <div className="form-control">
+                <label className="label font-semibold">Image URL</label>
+                <input
+                  name="image"
+                  type="url"
+                  defaultValue={selectedProduct.image}
+                  className="input input-bordered w-full"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="form-control">
+                  <label className="label font-semibold">Price ($)</label>
+                  <input
+                    name="price"
+                    type="number"
+                    defaultValue={selectedProduct.price}
+                    className="input input-bordered w-full"
+                    required
+                  />
+                </div>
+                <div className="form-control">
+                  <label className="label font-semibold">Category</label>
+                  <select
+                    name="category"
+                    defaultValue={selectedProduct.category}
+                    className="select select-bordered w-full"
+                  >
+                    <option value="t-shirt">T-Shirt</option>
+                    <option value="shirt">Shirt</option>
+                    <option value="jacket">Jacket</option>
+                    <option value="pants">Pants</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-control">
+                <label className="label font-semibold">Description</label>
+                <textarea
+                  name="description"
+                  defaultValue={selectedProduct.description}
+                  className="textarea textarea-bordered h-24"
+                  required
+                ></textarea>
+              </div>
+
               <div className="modal-action mt-6">
                 <button
                   type="submit"
