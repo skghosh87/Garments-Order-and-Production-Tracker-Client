@@ -11,10 +11,11 @@ import {
   FaBan,
 } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
-import { useAuth } from "../Context/AuthProvider";
+
 import Container from "../Components/Shared/Container";
 // import NotFound from "../Pages/NotFound";
 import PlaceOrderModal from "../Components/Modals/PlaceOrderModal";
+import useAuth from "../hooks/useAuth";
 
 const ProductDetailsPage = () => {
   // 1. URL থেকে প্রোডাক্ট আইডি গ্রহণ

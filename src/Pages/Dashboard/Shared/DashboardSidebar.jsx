@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { useAuth } from "../../../Context/AuthProvider";
+import useAuth from "../../../hooks/useAuth";
 import {
   FaUserShield,
   FaProductHunt,

@@ -1,7 +1,8 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "../Context/AuthProvider";
+
 import { toast } from "react-toastify";
+import useAuth from "../hooks/useAuth";
 
 /**
  * RoleBasedRoute: ড্যাশবোর্ডের বা অন্য private route-কে নির্দিষ্ট রোলের জন্য সুরক্ষিত করে।

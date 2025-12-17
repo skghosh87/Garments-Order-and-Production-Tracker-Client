@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { useAuth } from "../Context/AuthProvider";
+
 import Navbar from "../Components/Shared/Navbar";
 import Footer from "../Components/Shared/Footer";
 import {
@@ -12,6 +12,7 @@ import {
   FaUserSlash,
 } from "react-icons/fa";
 import DashboardSidebar from "../Pages/Dashboard/Shared/DashboardSidebar";
+import useAuth from "../hooks/useAuth";
 
 /* ===========================
    Role Based Dashboard Links

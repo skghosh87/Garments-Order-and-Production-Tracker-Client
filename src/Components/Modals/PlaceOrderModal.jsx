@@ -8,7 +8,7 @@ import {
 } from "react-icons/fa";
 import { toast } from "react-toastify";
 import axios from "axios";
-import { useAuth } from "../../Context/AuthProvider";
+import useAuth from "../../hooks/useAuth";
 
 /**
  * PlaceOrderModal: অর্ডার প্লেস করার জন্য ব্যবহৃত মডাল কম্পোনেন্ট।

@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { useAuth } from "../../../Context/AuthProvider";
+
 import Swal from "sweetalert2";
 import { FaSpinner } from "react-icons/fa";
+import useAuth from "../../../hooks/useAuth";
 
 const MyOrders = () => {
   const { user } = useAuth();

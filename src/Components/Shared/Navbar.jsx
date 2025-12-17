@@ -1,241 +1,289 @@
-import { useEffect, useState } from "react";
-import { useAuth } from "../../Context/AuthProvider";
+import { useEffect, useState, useRef } from "react";
+import useAuth from "../../hooks/useAuth";
 import { CiMenuFries } from "react-icons/ci";
 import { IoMdClose } from "react-icons/io";
 import MyLink from "../Shared/MyLink";
 import Container from "../Shared/Container";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router-dom";
 
 const Navbar = () => {
   const { user, userRole, logOut } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false); // মোবাইল মেনু স্টেট
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // প্রোফাইল ড্রপডাউন স্টেট
+  const dropdownRef = useRef(null);
 
-  const handleLogout = () => {
-    logOut().catch((err) => console.error(err));
-  };
+  // থিম স্টেট
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
 
+  // ড্রপডাউনের বাইরে ক্লিক করলে বন্ধ করার লজিক
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // থিম পরিবর্তন লজিক
   useEffect(() => {
     const html = document.querySelector("html");
     html.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
   }, [theme]);
+
   const handleTheme = (checked) => {
     setTheme(checked ? "dark" : "light");
   };
-  const closeMenu = () => setIsOpen(false);
 
-  // Role-based Dashboard Links
-  const renderDashboardLinks = () => {
-    if (!userRole) return null;
-
-    switch (userRole) {
-      case "admin":
-        return (
-          <li>
-            <MyLink to="/dashboard/manage-users" onClick={closeMenu}>
-              Admin Dashboard
-            </MyLink>
-          </li>
-        );
-      case "manager":
-        return (
-          <li>
-            <MyLink to="/dashboard/manage-products" onClick={closeMenu}>
-              Manager Dashboard
-            </MyLink>
-          </li>
-        );
-      case "buyer":
-        return (
-          <li>
-            <MyLink to="/dashboard/my-orders" onClick={closeMenu}>
-              My Orders
-            </MyLink>
-          </li>
-        );
-      default:
-        return null;
+  const handleLogout = async () => {
+    try {
+      await logOut();
+      setIsOpen(false);
+      setIsDropdownOpen(false);
+      navigate("/login");
+    } catch (err) {
+      console.error("Logout failed:", err);
     }
   };
 
+  // ড্যাশবোর্ড পাথ নির্ধারণ
+  const getDashboardPath = () => {
+    if (userRole === "admin") return "/dashboard/manage-users";
+    if (userRole === "manager") return "/dashboard/manage-products";
+    if (userRole === "buyer") return "/dashboard/my-orders";
+    return "/dashboard";
+  };
+
+  const navLinks = (
+    <>
+      <li>
+        <MyLink to="/" onClick={() => setIsOpen(false)}>
+          Home
+        </MyLink>
+      </li>
+      <li>
+        <MyLink to="/all-products" onClick={() => setIsOpen(false)}>
+          All-Products
+        </MyLink>
+      </li>
+      <li>
+        <MyLink to="/about-us" onClick={() => setIsOpen(false)}>
+          About Us
+        </MyLink>
+      </li>
+      <li>
+        <MyLink to="/contact" onClick={() => setIsOpen(false)}>
+          Contact
+        </MyLink>
+      </li>
+    </>
+  );
+
   return (
-    <header className="bg-white shadow-md sticky top-0 z-50">
-      <Container className="relative">
-        <nav className="flex justify-between items-center h-16">
+    <header className="bg-base-100 shadow-md sticky top-0 z-50 transition-colors duration-300">
+      <Container>
+        <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link
             to="/"
-            className="text-2xl font-bold text-green-600 hover:text-blue-700"
+            className="text-xl md:text-2xl font-bold text-green-600 flex items-center gap-2"
           >
-            Garments Tracker
+            <span className="bg-green-600 text-white p-1 rounded">GT</span>
+            <span className="hidden sm:block">Garments Tracker</span>
           </Link>
 
-          {/* Desktop Menu */}
-          <ul className="hidden md:flex items-center space-x-6 font-medium text-blue-900">
-            <li>
-              <MyLink to="/" onClick={closeMenu}>
-                Home
-              </MyLink>
-            </li>
-            <li>
-              <MyLink to="/all-products" onClick={closeMenu}>
-                All-Products
-              </MyLink>
-            </li>
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-6">
+            <ul className="flex items-center gap-6 font-medium text-base-content">
+              {navLinks}
+            </ul>
 
-            {!user ? (
-              <>
-                <li>
-                  <MyLink to="/about-us" onClick={closeMenu}>
-                    About Us
-                  </MyLink>
-                </li>
-                <li>
-                  <MyLink to="/contact" onClick={closeMenu}>
-                    Contact
-                  </MyLink>
-                </li>
-                <li>
-                  <MyLink
+            {/* Actions: Theme & Profile */}
+            <div className="flex items-center gap-4 border-l pl-6 border-gray-200">
+              <input
+                onChange={(e) => handleTheme(e.target.checked)}
+                type="checkbox"
+                checked={theme === "dark"}
+                className="toggle toggle-success toggle-sm"
+              />
+
+              {!user ? (
+                <div className="flex items-center gap-2">
+                  <Link
                     to="/login"
-                    onClick={closeMenu}
-                    className="text-green-600 btn btn-outline hover:bg-green-700 hover:text-white"
+                    className="btn btn-sm btn-outline btn-success"
                   >
                     Login
-                  </MyLink>
-                </li>
-                <li>
-                  <MyLink
+                  </Link>
+                  <Link
                     to="/register"
-                    onClick={closeMenu}
-                    className="text-red-600 btn btn-outline  px-4 py-2 rounded hover:bg-green-700 hover:text-white"
+                    className="btn btn-sm btn-success text-white"
                   >
                     Register
-                  </MyLink>
-                </li>
-                <input
-                  onChange={(e) => handleTheme(e.target.checked)}
-                  type="checkbox"
-                  defaultChecked={localStorage.getItem("theme") === "dark"}
-                  className="toggle"
-                />
-              </>
-            ) : (
-              <>
-                {renderDashboardLinks()}
-                <li className="flex items-center gap-2">
-                  <img
-                    src={
-                      user?.photoURL ||
-                      "https://i.ibb.co/2kRrFqG/default-avatar.png"
-                    }
-                    alt="User"
-                    className="w-10 h-10 rounded-full object-cover border"
-                  />
-                  <span>{user?.displayName || "User"}</span>
-                </li>
-                <li>
+                  </Link>
+                </div>
+              ) : (
+                <div className="relative" ref={dropdownRef}>
                   <button
-                    onClick={handleLogout}
-                    className="text-red-600 hover:text-red-700"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="flex items-center focus:outline-none"
+                    title={user?.displayName}
                   >
-                    Logout
+                    <div className="avatar online">
+                      <div className="w-10 h-10 rounded-full ring ring-green-500 ring-offset-base-100 ring-offset-2">
+                        <img
+                          src={
+                            user?.photoURL ||
+                            "https://i.ibb.co/2kRrFqG/default-avatar.png"
+                          }
+                          alt="Profile"
+                        />
+                      </div>
+                    </div>
                   </button>
-                </li>
-              </>
-            )}
-          </ul>
 
-          {/* Mobile Menu Button */}
-          <button
-            className="md:hidden text-3xl"
-            onClick={() => setIsOpen(!isOpen)}
-          >
-            {isOpen ? <IoMdClose /> : <CiMenuFries />}
-          </button>
-        </nav>
+                  {/* Dropdown Menu */}
+                  {isDropdownOpen && (
+                    <div className="absolute right-0 mt-3 w-56 bg-base-100 rounded-xl shadow-2xl border border-base-200 p-2 animate-in fade-in zoom-in duration-200">
+                      <div className="px-4 py-3 border-b border-base-200 mb-2">
+                        <p className="text-sm font-bold truncate">
+                          {user?.displayName || "User"}
+                        </p>
+                        <p className="text-xs text-base-content/60 truncate">
+                          {user?.email}
+                        </p>
+                        <span className="badge badge-success badge-xs mt-1 capitalize text-[10px]">
+                          {userRole}
+                        </span>
+                      </div>
+                      <ul className="space-y-1">
+                        <li>
+                          <Link
+                            to={getDashboardPath()}
+                            onClick={() => setIsDropdownOpen(false)}
+                            className="flex items-center px-4 py-2 hover:bg-base-200 rounded-lg transition-colors"
+                          >
+                            Dashboard
+                          </Link>
+                        </li>
+                        <li>
+                          <button
+                            onClick={handleLogout}
+                            className="w-full text-left px-4 py-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors font-medium"
+                          >
+                            Logout
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
 
-        {/* Mobile Menu */}
+          {/* Mobile Menu Button & Theme */}
+          <div className="flex md:hidden items-center gap-3">
+            <input
+              onChange={(e) => handleTheme(e.target.checked)}
+              type="checkbox"
+              checked={theme === "dark"}
+              className="toggle toggle-success toggle-xs"
+            />
+            <button
+              className="text-2xl text-base-content focus:outline-none"
+              onClick={() => setIsOpen(!isOpen)}
+            >
+              {isOpen ? <IoMdClose /> : <CiMenuFries />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Sidebar Navigation */}
         <div
-          className={`md:hidden absolute left-0 top-16 w-full bg-white shadow-md transition-all duration-300 ${
-            isOpen
-              ? "opacity-100 visible translate-y-0"
-              : "opacity-0 invisible -translate-y-5"
+          className={`md:hidden fixed inset-y-0 left-0 z-[60] w-72 bg-base-100 shadow-2xl transform transition-transform duration-300 ease-in-out ${
+            isOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
-          <ul className="flex flex-col p-4 space-y-3 font-medium">
-            <li>
-              <MyLink to="/" onClick={closeMenu}>
-                Home
-              </MyLink>
-            </li>
-            <li>
-              <MyLink to="/all-products" onClick={closeMenu}>
-                All-Products
-              </MyLink>
-            </li>
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-8">
+              <span className="text-xl font-bold text-green-600">Menu</span>
+              <button onClick={() => setIsOpen(false)}>
+                <IoMdClose className="text-2xl" />
+              </button>
+            </div>
 
-            {!user ? (
-              <>
+            {user && (
+              <div className="flex items-center gap-3 mb-8 p-3 bg-base-200 rounded-xl">
+                <img
+                  className="w-12 h-12 rounded-full border-2 border-green-500"
+                  src={
+                    user?.photoURL ||
+                    "https://i.ibb.co/2kRrFqG/default-avatar.png"
+                  }
+                  alt=""
+                />
+                <div className="overflow-hidden">
+                  <p className="font-bold truncate">{user?.displayName}</p>
+                  <p className="text-xs opacity-60 truncate">{user?.email}</p>
+                </div>
+              </div>
+            )}
+
+            <ul className="flex flex-col gap-4 font-medium">
+              {navLinks}
+              {user && (
                 <li>
-                  <MyLink to="/about-us" onClick={closeMenu}>
-                    About Us
-                  </MyLink>
+                  <Link
+                    to={getDashboardPath()}
+                    onClick={() => setIsOpen(false)}
+                    className="text-green-600 font-bold"
+                  >
+                    My Dashboard
+                  </Link>
                 </li>
-                <li>
-                  <MyLink to="/contact" onClick={closeMenu}>
-                    Contact
-                  </MyLink>
-                </li>
-                <li>
-                  <MyLink
+              )}
+            </ul>
+
+            <div className="mt-10 pt-6 border-t border-base-200">
+              {!user ? (
+                <div className="flex flex-col gap-3">
+                  <Link
                     to="/login"
-                    onClick={closeMenu}
-                    className="text-green-600"
+                    onClick={() => setIsOpen(false)}
+                    className="btn btn-outline btn-success w-full"
                   >
                     Login
-                  </MyLink>
-                </li>
-                <li>
-                  <MyLink
+                  </Link>
+                  <Link
                     to="/register"
-                    onClick={closeMenu}
-                    className="bg-green-600 text-white text-center py-2 rounded"
+                    onClick={() => setIsOpen(false)}
+                    className="btn btn-success text-white w-full"
                   >
                     Register
-                  </MyLink>
-                </li>
-              </>
-            ) : (
-              <>
-                {renderDashboardLinks()}
-                <li className="flex items-center gap-3">
-                  <img
-                    src={
-                      user?.photoURL ||
-                      "https://i.ibb.co/2kRrFqG/default-avatar.png"
-                    }
-                    alt="User"
-                    className="w-10 h-10 rounded-full object-cover border"
-                  />
-                  <span>{user?.displayName || "User"}</span>
-                </li>
-                <li>
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      closeMenu();
-                    }}
-                    className="text-red-600"
-                  >
-                    Logout
-                  </button>
-                </li>
-              </>
-            )}
-          </ul>
+                  </Link>
+                </div>
+              ) : (
+                <button
+                  onClick={handleLogout}
+                  className="btn btn-error btn-outline w-full text-white"
+                >
+                  Logout
+                </button>
+              )}
+            </div>
+          </div>
         </div>
+        {/* Overlay for Mobile Sidebar */}
+        {isOpen && (
+          <div
+            onClick={() => setIsOpen(false)}
+            className="fixed inset-0 bg-black/50 z-50 md:hidden animate-fade-in"
+          />
+        )}
       </Container>
     </header>
   );

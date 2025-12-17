@@ -13,8 +13,9 @@ import { IoEyeOff } from "react-icons/io5";
 import { Link, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useAuth } from "../Context/AuthProvider";
+
 import Container from "../Components/Shared/Container";
+import useAuth from "../hooks/useAuth";
 // import axios from "axios";
 
 const Register = () => {
@@ -168,8 +169,8 @@ const Register = () => {
                 className="mt-1 w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white appearance-none transition duration-150"
                 required
               >
-                <option value="buyer">Buyer (Order Placer)</option>
-                <option value="manager">Manager (Production Supervisor)</option>
+                <option value="buyer">Buyer </option>
+                <option value="manager">Manager </option>
               </select>
             </div>
             {/* Photo URL */}{" "}
