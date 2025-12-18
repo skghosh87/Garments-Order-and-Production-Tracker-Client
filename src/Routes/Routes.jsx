@@ -48,7 +48,7 @@ export const router = createBrowserRouter([
       },
       // প্রোডাক্ট ডিটেইলস পেজ (Private Route): শুধু লগইন করা ইউজারদের জন্য
       {
-        path: "product/:id",
+        path: "product-details/:id",
         // Admin, Manager, Buyer - সকলেই প্রোডাক্ট দেখতে পারবে।
         element: (
           <RoleBasedRoute allowedRoles={["admin", "manager", "buyer"]}>

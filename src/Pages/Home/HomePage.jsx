@@ -4,6 +4,7 @@ import OurProducts from "../../Components/HomePageSection/OurProducts";
 import CustomerFeedback from "../../Components/HomePageSection/CustomerFeedback";
 import HowItWorks from "../../Components/HomePageSection/HowItWorks";
 import ExtraSection from "../../Components/HomePageSection/ExtraSection";
+import ImpactStats from "../../Components/HomePageSection/ImpactStats";
 
 const HomePage = () => {
   return (
@@ -21,7 +22,7 @@ const HomePage = () => {
       <CustomerFeedback />
 
       {/* 5. Two Extra Sections */}
-      <ExtraSection sectionType="feature" />
+      <ImpactStats />
       <ExtraSection sectionType="partners" />
     </div>
   );

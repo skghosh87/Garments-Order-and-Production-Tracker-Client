@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { FaEdit, FaTrash, FaSpinner, FaTimes, FaBoxOpen } from "react-icons/fa";
+import {
+  FaEdit,
+  FaTrash,
+  FaSpinner,
+  FaTimes,
+  FaBoxOpen,
+  FaCubes,
+} from "react-icons/fa";
 import useAuth from "../../../hooks/useAuth";
 
 const ManageProducts = () => {
@@ -12,7 +19,7 @@ const ManageProducts = () => {
 
   const API_URL = import.meta.env.VITE_SERVER_API;
 
-  /* ================= Fetch All Products with Case-Insensitive Filtering ================= */
+  /* ================= Fetch All Products ================= */
   const fetchProducts = async () => {
     setLoading(true);
     try {
@@ -20,15 +27,12 @@ const ManageProducts = () => {
         withCredentials: true,
       });
 
-      // কেস-সেনসিটিভ সমস্যা এড়াতে lowercase এ রূপান্তর করে চেক করা হচ্ছে
       const currentRole = userRole?.toLowerCase();
       const isAdmin = currentRole === "admin";
 
       if (isAdmin) {
-        // অ্যাডমিন হলে সব প্রোডাক্ট দেখাবে
         setProducts(res.data);
       } else {
-        // ম্যানেজার হলে শুধু নিজের ইমেইলের প্রোডাক্ট ফিল্টার করবে
         const myProducts = res.data.filter(
           (product) => product.addedBy === user?.email
         );
@@ -79,9 +83,12 @@ const ManageProducts = () => {
   const handleUpdate = async (e) => {
     e.preventDefault();
     const form = e.target;
+
+    // Quantity সহ আপডেট ডাটা তৈরি
     const updatedData = {
       name: form.name.value,
       price: Number(form.price.value),
+      quantity: Number(form.quantity.value), // নতুন যুক্ত করা হয়েছে
       category: form.category.value,
       description: form.description.value,
       image: form.image.value,
@@ -96,7 +103,7 @@ const ManageProducts = () => {
       if (res.data.modifiedCount > 0) {
         Swal.fire("Success!", "Product updated successfully.", "success");
         document.getElementById("edit_modal").close();
-        fetchProducts();
+        fetchProducts(); // ডাটা রিফ্রেশ করা
       } else {
         Swal.fire("No Changes", "No information was modified.", "info");
       }
@@ -132,8 +139,8 @@ const ManageProducts = () => {
             </span>
           </p>
         </div>
-        <div className="bg-green-50 px-4 py-2 rounded-lg border border-green-100">
-          <p className="text-sm text-green-700 font-semibold text-center">
+        <div className="bg-green-50 px-4 py-2 rounded-lg border border-green-100 text-center">
+          <p className="text-sm text-green-700 font-semibold">
             Total Items: {products.length}
           </p>
         </div>
@@ -149,13 +156,14 @@ const ManageProducts = () => {
       ) : (
         <div className="overflow-x-auto rounded-lg">
           <table className="table w-full">
-            <thead className="bg-gray-100 dark:bg-gray-700">
-              <tr className="text-gray-700 dark:text-gray-200">
+            <thead className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
+              <tr>
                 <th>#</th>
                 <th>Preview</th>
                 <th>Product Details</th>
                 <th>Category</th>
                 <th>Price</th>
+                <th>Stock (Qty)</th> {/* Quantity কলাম */}
                 <th>Status</th>
                 <th className="text-center">Actions</th>
               </tr>
@@ -189,12 +197,27 @@ const ManageProducts = () => {
                     </div>
                   </td>
                   <td>
-                    <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs uppercase font-bold tracking-tighter">
+                    <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs uppercase font-bold">
                       {product.category}
                     </span>
                   </td>
                   <td className="font-bold text-green-600 dark:text-green-400">
                     ${product.price?.toLocaleString()}
+                  </td>
+                  {/* Quantity প্রদর্শন */}
+                  <td>
+                    <div className="flex items-center gap-2">
+                      <FaCubes className="text-gray-400 text-xs" />
+                      <span
+                        className={`font-bold ${
+                          product.quantity > 0
+                            ? "text-blue-600"
+                            : "text-red-500"
+                        }`}
+                      >
+                        {product.quantity || 0}
+                      </span>
+                    </div>
                   </td>
                   <td>
                     <div
@@ -208,7 +231,6 @@ const ManageProducts = () => {
                     </div>
                   </td>
                   <td className="flex justify-center gap-2">
-                    {/* মালিকানা যাচাই: কেস-সেনসিটিভ সমাধান সহ */}
                     {userRole?.toLowerCase() === "admin" ||
                     product.addedBy === user?.email ? (
                       <>
@@ -265,7 +287,7 @@ const ManageProducts = () => {
                   name="name"
                   type="text"
                   defaultValue={selectedProduct.name}
-                  className="input input-bordered focus:border-green-500 w-full"
+                  className="input input-bordered w-full"
                   required
                 />
               </div>
@@ -283,21 +305,36 @@ const ManageProducts = () => {
                     required
                   />
                 </div>
+                {/* Quantity ইনপুট যুক্ত করা হয়েছে */}
                 <div className="form-control">
                   <label className="label text-sm font-bold text-gray-600 uppercase">
-                    Category
+                    Stock Quantity
                   </label>
-                  <select
-                    name="category"
-                    defaultValue={selectedProduct.category}
-                    className="select select-bordered w-full"
-                  >
-                    <option value="t-shirt">T-Shirt</option>
-                    <option value="shirt">Shirt</option>
-                    <option value="jacket">Jacket</option>
-                    <option value="pants">Pants</option>
-                  </select>
+                  <input
+                    name="quantity"
+                    type="number"
+                    defaultValue={selectedProduct.quantity || 0}
+                    className="input input-bordered w-full"
+                    required
+                    min="0"
+                  />
                 </div>
+              </div>
+
+              <div className="form-control">
+                <label className="label text-sm font-bold text-gray-600 uppercase">
+                  Category
+                </label>
+                <select
+                  name="category"
+                  defaultValue={selectedProduct.category}
+                  className="select select-bordered w-full"
+                >
+                  <option value="t-shirt">T-Shirt</option>
+                  <option value="shirt">Shirt</option>
+                  <option value="jacket">Jacket</option>
+                  <option value="pants">Pants</option>
+                </select>
               </div>
 
               <div className="form-control">
@@ -330,7 +367,7 @@ const ManageProducts = () => {
                   type="submit"
                   className="btn btn-success text-white w-full h-12 text-lg shadow-md"
                 >
-                  Update Now
+                  Update Product
                 </button>
               </div>
             </form>

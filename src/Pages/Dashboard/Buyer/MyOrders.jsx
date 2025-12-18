@@ -107,7 +107,7 @@ const MyOrders = () => {
                   <td className="font-bold text-gray-700">
                     {order.productName}
                   </td>
-                  <td className="text-center">{order.quantity} pcs</td>
+                  <td className="text-center">{order.orderQuantity} pcs</td>
                   <td className="text-right font-bold text-blue-600">
                     ${order.totalPrice?.toLocaleString()}
                   </td>

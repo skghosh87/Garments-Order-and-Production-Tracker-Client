@@ -1,7 +1,17 @@
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay, Pagination } from "swiper/modules";
+import { Autoplay, Pagination, Navigation } from "swiper/modules";
+import {
+  FaQuoteLeft,
+  FaChevronLeft,
+  FaChevronRight,
+  FaStar,
+} from "react-icons/fa";
+
+// Swiper CSS
 import "swiper/css";
 import "swiper/css/pagination";
+import "swiper/css/navigation";
+
 import Container from "../Shared/Container";
 
 const reviews = [
@@ -63,71 +73,92 @@ const reviews = [
 
 const CustomerFeedback = () => {
   return (
-    <section className="py-20 bg-base-100">
+    <section className="py-24 bg-base-100">
       <Container>
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-base-content uppercase tracking-wider">
-            Customer Feedback
+        {/* ১. হেডিং - এখন পেজের ঠিক মাঝখানে */}
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-5xl font-black text-base-content uppercase tracking-widest">
+            Customer <span className="text-green-500">Feedback</span>
           </h2>
           <div className="w-24 h-1.5 bg-green-500 mx-auto mt-4 rounded-full"></div>
         </div>
 
         <Swiper
-          modules={[Autoplay, Pagination]}
+          modules={[Autoplay, Pagination, Navigation]}
           autoplay={{ delay: 3500, disableOnInteraction: false }}
           loop={true}
-          spaceBetween={25}
-          pagination={{ clickable: true }}
+          spaceBetween={30}
+          pagination={{ clickable: true, dynamicBullets: true }}
+          navigation={{
+            prevEl: ".prev-btn",
+            nextEl: ".next-btn",
+          }}
           breakpoints={{
             0: { slidesPerView: 1 },
             768: { slidesPerView: 2 },
             1024: { slidesPerView: 3 },
           }}
-          className="pb-14"
+          className="!pb-10"
         >
           {reviews.map((review, i) => (
             <SwiperSlide key={i}>
-              {/* কার্ডের উচ্চতা কমিয়ে h-[350px] করা হয়েছে */}
-              <div className="bg-base-200 p-6 rounded-2xl shadow-sm border border-base-300 h-[250x] flex flex-col hover:shadow-lg transition-all duration-300 group">
-                {/* প্রোফাইল অংশ */}
-                <div className="flex items-center gap-3 mb-4">
-                  <img
-                    src={review.img}
-                    alt={review.Author}
-                    className="w-12 h-12 rounded-full object-cover border-2 border-green-500"
-                  />
-                  <div>
-                    <h4 className="text-md font-bold text-base-content leading-tight">
-                      {review.Author}
-                    </h4>
-                    <p className="text-[10px] font-medium text-base-content/50 uppercase">
-                      {review.Designation}
-                    </p>
+              {/* ২. কার্ড - উচ্চতা ৩৫০px এবং কন্টেন্ট সেন্টারে */}
+              <div className="bg-base-200 p-8 rounded-3xl border border-base-300 h-[350px] flex flex-col items-center text-center justify-between hover:border-green-500 transition-all duration-300 shadow-sm hover:shadow-xl group">
+                {/* Author Info */}
+                <div className="flex flex-col items-center">
+                  <div className="relative mb-3">
+                    <img
+                      src={review.img}
+                      alt={review.Author}
+                      className="w-20 h-20 rounded-full object-cover border-4 border-green-500 p-1 bg-white"
+                    />
+                    <FaQuoteLeft className="absolute -bottom-1 -right-1 bg-green-500 text-white p-2 rounded-full text-3xl shadow-lg" />
                   </div>
+                  <h4 className="text-lg font-bold text-base-content">
+                    {review.Author}
+                  </h4>
+                  <p className="text-[10px] font-bold text-green-600 uppercase italic">
+                    {review.Designation} @ {review.company}
+                  </p>
                 </div>
 
-                {/* কোম্পানি এবং রেটিং */}
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-md">
-                    {review.company}
-                  </span>
-                  <div className="flex text-yellow-400">
-                    {[...Array(5)].map((_, index) => (
-                      <span key={index} className="text-sm">
-                        {index < review.rating ? "★" : "☆"}
-                      </span>
-                    ))}
-                  </div>
+                {/* Comment */}
+                <div className="max-h-[80px] overflow-y-auto px-2 scrollbar-hide">
+                  <p className="text-base-content/70 italic text-sm leading-relaxed">
+                    “{review.comment}”
+                  </p>
                 </div>
 
-                {/* বর্ধিত কমেন্ট - লাইন ক্ল্যাম্প ব্যবহার করা হয়েছে যাতে টেক্সট বেশি হলেও ডিজাইন না ভাঙে */}
-                <p className="text-base-content/70 italic leading-relaxed text-sm overflow-hidden display-webkit-box webkit-line-clamp-5 webkit-box-orient-vertical">
-                  “{review.comment}”
-                </p>
+                {/* Rating */}
+                <div className="flex gap-1 mb-2">
+                  {[...Array(5)].map((_, index) => (
+                    <FaStar
+                      key={index}
+                      className={`text-sm ${
+                        index < review.rating
+                          ? "text-yellow-400"
+                          : "text-gray-300"
+                      }`}
+                    />
+                  ))}
+                </div>
               </div>
             </SwiperSlide>
           ))}
         </Swiper>
+
+        {/* ৩. নেভিগেশন বাটন - কার্ডের নিচে (ফুটার অংশে) */}
+        <div className="flex justify-center items-center gap-6 mt-10">
+          <button className="prev-btn p-4 rounded-full bg-base-200 hover:bg-green-500 hover:text-white transition-all shadow-md group border border-base-300">
+            <FaChevronLeft className="text-xl group-active:scale-90" />
+          </button>
+
+          <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+
+          <button className="next-btn p-4 rounded-full bg-base-200 hover:bg-green-500 hover:text-white transition-all shadow-md group border border-base-300">
+            <FaChevronRight className="text-xl group-active:scale-90" />
+          </button>
+        </div>
       </Container>
     </section>
   );
