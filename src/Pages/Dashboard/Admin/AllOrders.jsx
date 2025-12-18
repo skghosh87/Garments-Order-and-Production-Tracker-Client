@@ -1,18 +1,23 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { FaSpinner } from "react-icons/fa";
+import {
+  FaSpinner,
+  FaClipboardList,
+  FaCalendarAlt,
+  FaUserCircle,
+} from "react-icons/fa";
 
 const AllOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const API_URL = import.meta.env.VITE_SERVER_API;
 
   const fetchAllOrders = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_SERVER_API}/api/v1/orders`,
-        { withCredentials: true }
-      );
+      const res = await axios.get(`${API_URL}/api/v1/orders`, {
+        withCredentials: true,
+      });
       setOrders(res.data);
     } catch (error) {
       console.error("Failed to fetch orders:", error);
@@ -27,55 +32,132 @@ const AllOrders = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[300px]">
-        <FaSpinner className="animate-spin text-4xl text-green-500" />
+      <div className="flex flex-col justify-center items-center min-h-[400px] space-y-4">
+        <FaSpinner className="animate-spin text-5xl text-blue-600" />
+        <p className="text-gray-500 font-medium animate-pulse">
+          Fetching global orders...
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-md">
-      <h1 className="text-2xl font-bold mb-6">All Orders (Admin)</h1>
+    <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4 border-b dark:border-gray-700 pb-6">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
+            <FaClipboardList className="text-3xl text-blue-600" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-black text-gray-800 dark:text-white tracking-tight">
+              System Orders
+            </h1>
+            <p className="text-sm text-gray-500">
+              Monitor all transactions across the platform
+            </p>
+          </div>
+        </div>
+
+        <div className="stats shadow bg-gray-50 dark:bg-gray-700">
+          <div className="stat py-2 px-6">
+            <div className="stat-title text-xs font-bold uppercase">
+              Total Volume
+            </div>
+            <div className="stat-value text-2xl text-blue-600">
+              $
+              {orders
+                .reduce((acc, curr) => acc + curr.totalPrice, 0)
+                .toLocaleString()}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {orders.length === 0 ? (
-        <p className="text-gray-500">No orders found.</p>
+        <div className="text-center py-24 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700">
+          <p className="text-gray-400 text-xl italic font-light">
+            No orders have been recorded yet.
+          </p>
+        </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-700">
           <table className="table w-full">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Buyer</th>
-                <th>Product</th>
-                <th>Qty</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Order Date</th>
+            {/* head */}
+            <thead className="bg-gray-50 dark:bg-gray-700">
+              <tr className="text-gray-600 dark:text-gray-200 uppercase text-[11px] font-black tracking-widest">
+                <th className="py-4">#</th>
+                <th className="py-4">Buyer Details</th>
+                <th className="py-4">Product Info</th>
+                <th className="py-4 text-center">Qty</th>
+                <th className="py-4 text-right">Revenue</th>
+                <th className="py-4 text-center">Current Status</th>
+                <th className="py-4 text-right">Timestamp</th>
               </tr>
             </thead>
-
-            <tbody>
+            <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
               {orders.map((order, index) => (
-                <tr key={order._id}>
-                  <td>{index + 1}</td>
-                  <td>{order.buyerEmail}</td>
-                  <td>{order.productName}</td>
-                  <td>{order.quantity}</td>
-                  <td>${order.totalPrice}</td>
+                <tr
+                  key={order._id}
+                  className="hover:bg-blue-50/30 dark:hover:bg-gray-700/50 transition-colors"
+                >
+                  <td className="font-mono text-gray-400">{index + 1}</td>
                   <td>
+                    <div className="flex items-center gap-2">
+                      <FaUserCircle className="text-gray-300 text-xl" />
+                      <div className="flex flex-col">
+                        <span className="font-bold text-gray-700 dark:text-gray-200 leading-none mb-1">
+                          Buyer
+                        </span>
+                        <span className="text-[10px] text-gray-400 font-medium">
+                          {order.buyerEmail}
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="flex flex-col">
+                      <span className="font-black text-gray-800 dark:text-white uppercase text-xs">
+                        {order.productName}
+                      </span>
+                      <span className="text-[9px] font-mono text-gray-400">
+                        ID: {order._id.slice(-8)}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="text-center font-bold text-gray-600 dark:text-gray-300">
+                    {order.quantity}
+                  </td>
+                  <td className="text-right font-black text-blue-600 dark:text-blue-400">
+                    ${order.totalPrice?.toLocaleString()}
+                  </td>
+                  <td className="text-center">
                     <span
-                      className={`badge ${
+                      className={`badge badge-sm font-bold py-3 px-4 border-none text-[10px] uppercase tracking-tighter ${
                         order.status === "pending"
-                          ? "badge-warning"
+                          ? "bg-amber-100 text-amber-700"
                           : order.status === "approved"
-                          ? "badge-success"
-                          : "badge-error"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-rose-100 text-rose-700"
                       }`}
                     >
                       {order.status}
                     </span>
                   </td>
-                  <td>{new Date(order.createdAt).toLocaleDateString()}</td>
+                  <td className="text-right">
+                    <div className="flex flex-col items-end">
+                      <div className="flex items-center gap-1 text-[11px] font-bold text-gray-600 dark:text-gray-300">
+                        <FaCalendarAlt className="text-[9px]" />
+                        {new Date(order.createdAt).toLocaleDateString("en-GB")}
+                      </div>
+                      <span className="text-[9px] text-gray-400">
+                        {new Date(order.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>

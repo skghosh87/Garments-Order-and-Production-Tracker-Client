@@ -1,18 +1,18 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { FaEdit, FaTrash, FaSpinner, FaTimes } from "react-icons/fa";
+import { FaEdit, FaTrash, FaSpinner, FaTimes, FaBoxOpen } from "react-icons/fa";
 import useAuth from "../../../hooks/useAuth";
 
 const ManageProducts = () => {
-  const { user, userRole } = useAuth(); // ইউজার এবং রোল গেট করা হলো
+  const { user, userRole } = useAuth();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   const API_URL = import.meta.env.VITE_SERVER_API;
 
-  /* ================= Fetch All Products with Filtering ================= */
+  /* ================= Fetch All Products with Case-Insensitive Filtering ================= */
   const fetchProducts = async () => {
     setLoading(true);
     try {
@@ -20,10 +20,15 @@ const ManageProducts = () => {
         withCredentials: true,
       });
 
-      // লজিক: অ্যাডমিন হলে সব দেখাবে, না হলে শুধু নিজের ইমেইলের প্রোডাক্ট ফিল্টার করবে
-      if (userRole === "admin") {
+      // কেস-সেনসিটিভ সমস্যা এড়াতে lowercase এ রূপান্তর করে চেক করা হচ্ছে
+      const currentRole = userRole?.toLowerCase();
+      const isAdmin = currentRole === "admin";
+
+      if (isAdmin) {
+        // অ্যাডমিন হলে সব প্রোডাক্ট দেখাবে
         setProducts(res.data);
       } else {
+        // ম্যানেজার হলে শুধু নিজের ইমেইলের প্রোডাক্ট ফিল্টার করবে
         const myProducts = res.data.filter(
           (product) => product.addedBy === user?.email
         );
@@ -31,13 +36,13 @@ const ManageProducts = () => {
       }
     } catch (err) {
       console.error("Fetch Error:", err);
+      Swal.fire("Error", "Could not load products.", "error");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    // ইউজার ডাটা লোড হওয়ার পর ফেচ শুরু হবে
     if (user?.email || userRole) {
       fetchProducts();
     }
@@ -47,13 +52,12 @@ const ManageProducts = () => {
   const handleDelete = async (id) => {
     Swal.fire({
       title: "Are you sure?",
-      text: "You won't be able to revert this!",
+      text: "This product will be permanently removed!",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#3b82f6",
       confirmButtonText: "Yes, delete it!",
-      cancelButtonText: "Cancel",
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
@@ -103,38 +107,53 @@ const ManageProducts = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <FaSpinner className="animate-spin text-4xl text-green-500" />
+      <div className="flex flex-col justify-center items-center min-h-[400px] space-y-4">
+        <FaSpinner className="animate-spin text-5xl text-green-500" />
+        <p className="text-gray-500 font-medium">Loading your inventory...</p>
       </div>
     );
   }
 
+  const currentRoleNormalized =
+    userRole?.toLowerCase() === "admin" ? "Admin" : "Manager";
+
   return (
-    <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-      <div className="flex justify-between items-center mb-6">
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Manage Products</h1>
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
+            Manage Products
+          </h1>
           <p className="text-sm text-gray-500">
-            {userRole === "admin" ? "Viewing all items" : "Viewing your items"}
+            Logged in as:{" "}
+            <span className="font-bold text-green-600">
+              {currentRoleNormalized}
+            </span>
           </p>
         </div>
-        <p className="text-sm text-gray-500 font-medium">
-          Total: {products.length}
-        </p>
+        <div className="bg-green-50 px-4 py-2 rounded-lg border border-green-100">
+          <p className="text-sm text-green-700 font-semibold text-center">
+            Total Items: {products.length}
+          </p>
+        </div>
       </div>
 
       {products.length === 0 ? (
-        <div className="text-center py-10 text-gray-500 italic">
-          No products found for your account.
+        <div className="text-center py-20 bg-gray-50 rounded-xl">
+          <FaBoxOpen className="text-5xl text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-500 italic">
+            No products found in your account.
+          </p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-lg">
           <table className="table w-full">
-            <thead className="bg-gray-50 text-gray-700">
-              <tr>
+            <thead className="bg-gray-100 dark:bg-gray-700">
+              <tr className="text-gray-700 dark:text-gray-200">
                 <th>#</th>
-                <th>Image</th>
-                <th>Name</th>
+                <th>Preview</th>
+                <th>Product Details</th>
                 <th>Category</th>
                 <th>Price</th>
                 <th>Status</th>
@@ -143,58 +162,75 @@ const ManageProducts = () => {
             </thead>
             <tbody>
               {products.map((product, index) => (
-                <tr key={product._id} className="hover:bg-gray-50 transition">
-                  <td>{index + 1}</td>
+                <tr
+                  key={product._id}
+                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all border-b border-gray-100 dark:border-gray-700"
+                >
+                  <td className="font-medium text-gray-400">{index + 1}</td>
                   <td>
                     <img
                       src={product.image}
                       alt={product.name}
-                      className="w-12 h-12 object-cover rounded-lg border shadow-sm"
+                      onError={(e) => {
+                        e.target.src =
+                          "https://via.placeholder.com/150?text=No+Image";
+                      }}
+                      className="w-14 h-14 object-cover rounded-xl border-2 border-white shadow-sm"
                     />
                   </td>
-                  <td className="font-medium text-gray-700">{product.name}</td>
                   <td>
-                    <span className="badge badge-ghost capitalize">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-gray-800 dark:text-gray-100">
+                        {product.name}
+                      </span>
+                      <span className="text-[10px] text-gray-400 font-mono">
+                        {product._id}
+                      </span>
+                    </div>
+                  </td>
+                  <td>
+                    <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs uppercase font-bold tracking-tighter">
                       {product.category}
                     </span>
                   </td>
-                  <td className="font-semibold text-green-600">
-                    ${product.price}
+                  <td className="font-bold text-green-600 dark:text-green-400">
+                    ${product.price?.toLocaleString()}
                   </td>
                   <td>
-                    <span
+                    <div
                       className={`badge ${
                         product.status === "active"
                           ? "badge-success"
                           : "badge-error"
-                      } text-white border-none`}
+                      } text-white font-bold p-3`}
                     >
                       {product.status}
-                    </span>
+                    </div>
                   </td>
-                  <td className="flex justify-center gap-3">
-                    {/* সিকিউরিটি চেক: শুধু মালিক বা অ্যাডমিন এডিট/ডিলিট করতে পারবে */}
-                    {userRole === "admin" || product.addedBy === user?.email ? (
+                  <td className="flex justify-center gap-2">
+                    {/* মালিকানা যাচাই: কেস-সেনসিটিভ সমাধান সহ */}
+                    {userRole?.toLowerCase() === "admin" ||
+                    product.addedBy === user?.email ? (
                       <>
                         <button
                           onClick={() => {
                             setSelectedProduct(product);
                             document.getElementById("edit_modal").showModal();
                           }}
-                          className="btn btn-sm btn-circle btn-info text-white shadow-sm cursor-pointer hover:scale-110 transition-transform"
+                          className="btn btn-sm btn-circle btn-info text-white hover:scale-110 transition-transform"
                         >
                           <FaEdit />
                         </button>
                         <button
                           onClick={() => handleDelete(product._id)}
-                          className="btn btn-sm btn-circle btn-error text-white shadow-sm cursor-pointer hover:scale-110 transition-transform"
+                          className="btn btn-sm btn-circle btn-error text-white hover:scale-110 transition-transform"
                         >
                           <FaTrash />
                         </button>
                       </>
                     ) : (
-                      <span className="text-xs text-gray-400 italic">
-                        View Only
+                      <span className="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-400 uppercase font-bold italic">
+                        Restricted
                       </span>
                     )}
                   </td>
@@ -207,43 +243,38 @@ const ManageProducts = () => {
 
       {/* Edit Modal */}
       <dialog id="edit_modal" className="modal modal-bottom sm:modal-middle">
-        <div className="modal-box max-w-lg">
-          <div className="flex justify-between items-center border-b pb-3 mb-4">
-            <h3 className="font-bold text-lg">Update Product Info</h3>
+        <div className="modal-box max-w-lg rounded-2xl">
+          <div className="flex justify-between items-center border-b pb-4 mb-6">
+            <h3 className="font-bold text-xl text-gray-800">
+              Edit Product Detail
+            </h3>
             <form method="dialog">
-              <button className="btn btn-sm btn-circle btn-ghost focus:outline-none">
+              <button className="btn btn-sm btn-circle btn-ghost">
                 <FaTimes />
               </button>
             </form>
           </div>
 
           {selectedProduct && (
-            <form onSubmit={handleUpdate} className="space-y-4">
+            <form onSubmit={handleUpdate} className="space-y-5">
               <div className="form-control">
-                <label className="label font-semibold">Product Name</label>
+                <label className="label text-sm font-bold text-gray-600 uppercase">
+                  Product Name
+                </label>
                 <input
                   name="name"
                   type="text"
                   defaultValue={selectedProduct.name}
-                  className="input input-bordered w-full"
-                  required
-                />
-              </div>
-
-              <div className="form-control">
-                <label className="label font-semibold">Image URL</label>
-                <input
-                  name="image"
-                  type="url"
-                  defaultValue={selectedProduct.image}
-                  className="input input-bordered w-full"
+                  className="input input-bordered focus:border-green-500 w-full"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="form-control">
-                  <label className="label font-semibold">Price ($)</label>
+                  <label className="label text-sm font-bold text-gray-600 uppercase">
+                    Price ($)
+                  </label>
                   <input
                     name="price"
                     type="number"
@@ -253,7 +284,9 @@ const ManageProducts = () => {
                   />
                 </div>
                 <div className="form-control">
-                  <label className="label font-semibold">Category</label>
+                  <label className="label text-sm font-bold text-gray-600 uppercase">
+                    Category
+                  </label>
                   <select
                     name="category"
                     defaultValue={selectedProduct.category}
@@ -268,7 +301,22 @@ const ManageProducts = () => {
               </div>
 
               <div className="form-control">
-                <label className="label font-semibold">Description</label>
+                <label className="label text-sm font-bold text-gray-600 uppercase">
+                  Image URL
+                </label>
+                <input
+                  name="image"
+                  type="url"
+                  defaultValue={selectedProduct.image}
+                  className="input input-bordered w-full"
+                  required
+                />
+              </div>
+
+              <div className="form-control">
+                <label className="label text-sm font-bold text-gray-600 uppercase">
+                  Description
+                </label>
                 <textarea
                   name="description"
                   defaultValue={selectedProduct.description}
@@ -277,12 +325,12 @@ const ManageProducts = () => {
                 ></textarea>
               </div>
 
-              <div className="modal-action mt-6">
+              <div className="modal-action">
                 <button
                   type="submit"
-                  className="btn btn-success text-white w-full shadow-lg cursor-pointer"
+                  className="btn btn-success text-white w-full h-12 text-lg shadow-md"
                 >
-                  Save Changes
+                  Update Now
                 </button>
               </div>
             </form>
