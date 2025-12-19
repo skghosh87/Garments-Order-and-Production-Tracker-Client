@@ -13,7 +13,7 @@ import { IoEyeOff } from "react-icons/io5";
 import { Link, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios"; // Axios ইম্পোর্ট করা হয়েছে
+import axios from "axios";
 
 import Container from "../Components/Shared/Container";
 import useAuth from "../hooks/useAuth";
@@ -31,6 +31,7 @@ const Register = () => {
   const [passwordError, setPasswordError] = useState("");
   const navigate = useNavigate();
 
+  // ফায়ারবেস এরর মেসেজ পার্স করা
   const parseFirebaseError = (error) => {
     let errorMessage = error.message
       .replace("Firebase: Error (auth/", "")
@@ -46,59 +47,63 @@ const Register = () => {
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    const form = new FormData(e.currentTarget);
-    const name = form.get("name");
+    const form = e.target;
+    const name = form.name.value;
+    const email = form.email.value;
     const photoURL =
-      form.get("photo") || "https://i.ibb.co/5vFwYxS/default-user.png";
-    const email = form.get("email");
-    const password = form.get("password");
-    const role = form.get("role");
+      form.photo.value || "https://i.ibb.co/5vFwYxS/default-user.png";
+    const password = form.password.value;
+    const role = form.role.value;
 
     setPasswordError("");
 
+    // পাসওয়ার্ড ভ্যালিডেশন (Assignment Requirement)
     const regExp = /^(?=.*[a-z])(?=.*[A-Z]).{6,}$/;
     if (!regExp.test(password)) {
       const validationMessage =
-        "Password must be at least 6 characters long and include one uppercase and one lowercase letter.";
+        "Password must be at least 6 characters, include one uppercase and one lowercase letter.";
       setPasswordError(validationMessage);
-      toast.error(validationMessage, { position: "top-center" });
+      toast.error(validationMessage);
       return;
     }
 
     try {
       setLoading(true);
 
-      // ১. Firebase-এ ইউজার তৈরি করা
-      const result = await createUser(email, password);
+      // ১. Firebase-এ ইউজার তৈরি
+      await createUser(email, password);
       await updateUserProfile(name, photoURL);
 
-      // ২. MongoDB-র জন্য ইউজার অবজেক্ট তৈরি (রোল বড় হাতের অক্ষরে করা হয়েছে)
+      // ২. MongoDB-র জন্য ডাটা অবজেক্ট (Role capitalization & Status 'pending')
       const userInfo = {
         name,
         email,
         role: role.charAt(0).toUpperCase() + role.slice(1),
         photoURL,
-        status: "verified", // অথবা আপনার প্রয়োজন মতো 'pending' দিতে পারেন
+        status: "pending", // Assignment Requirement: Default status pending
         createdAt: new Date(),
       };
 
-      // ৩. আপনার ব্যাকএন্ডে ডেটা পাঠানো
+      // ৩. ব্যাকএন্ডে ডাটা পাঠানো
       const res = await axios.post(
-        "http://localhost:5000/api/v1/users",
+        `${import.meta.env.VITE_SERVER_API}/api/v1/users`,
         userInfo
       );
 
-      if (res.data.insertedId) {
-        toast.success("Account created and saved to database!", {
-          position: "top-center",
-        });
-        await logOut();
-        navigate("/login");
+      if (res.data.insertedId || res.data.message === "User already exists") {
+        toast.success(
+          "Registration Successful! Please login and wait for approval."
+        );
+
+        // টোস্ট দেখার জন্য ২ সেকেন্ড সময় নিয়ে রিডাইরেক্ট
+        setTimeout(async () => {
+          await logOut();
+          navigate("/login");
+        }, 2000);
       }
     } catch (error) {
       console.error(error);
-      const errorMessage = parseFirebaseError(error);
-      toast.error(errorMessage, { position: "top-center" });
+      toast.error(parseFirebaseError(error));
     } finally {
       setLoading(false);
     }
@@ -110,28 +115,27 @@ const Register = () => {
       const result = await signInWithGoogle();
       const user = result.user;
 
-      // গুগল ইউজারের তথ্য MongoDB-তে পাঠানো
       const userInfo = {
         name: user?.displayName,
         email: user?.email,
-        role: "Buyer", // গুগল সাইন-আপের জন্য ডিফল্ট রোল
+        role: "Buyer", // Google login-এর জন্য ডিফল্ট রোল
         photoURL: user?.photoURL,
-        status: "verified",
+        status: "pending",
         createdAt: new Date(),
       };
 
-      await axios.post("http://localhost:5000/api/v1/users", userInfo);
+      await axios.post(
+        `${import.meta.env.VITE_SERVER_API}/api/v1/users`,
+        userInfo
+      );
 
-      toast.success("Google Sign-Up Successful!", {
-        position: "top-center",
-      });
-      await logOut();
-      navigate("/login");
+      toast.success("Google Sign-Up Successful! Redirecting to login...");
+      setTimeout(async () => {
+        await logOut();
+        navigate("/login");
+      }, 2000);
     } catch (error) {
-      const errorMessage = parseFirebaseError(error);
-      toast.error(`Google sign-up failed: ${errorMessage}`, {
-        position: "top-center",
-      });
+      toast.error(`Google sign-up failed: ${parseFirebaseError(error)}`);
     } finally {
       setLoading(false);
     }
@@ -139,145 +143,128 @@ const Register = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 dark:bg-gray-900">
+      <ToastContainer position="top-center" autoClose={2000} />
       <Container className="flex items-center justify-center">
         <div className="w-full max-w-lg bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl border border-green-200 dark:border-green-700/50">
           <h2 className="text-3xl font-bold text-center text-green-700 dark:text-green-400 mb-6 flex items-center justify-center gap-2">
-            <FaUserPlus className="text-green-500 dark:text-green-400 text-3xl" />
-            Create Your Account
+            <FaUserPlus className="text-3xl" /> Create Your Account
           </h2>
+
           <form onSubmit={handleSignup} className="space-y-4">
+            {/* Name */}
             <div>
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 <FaUser className="inline mr-2 text-green-500" /> Full Name
               </label>
               <input
-                id="name"
-                type="text"
                 name="name"
+                type="text"
                 placeholder="Your Name"
-                className="mt-1 w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition duration-150"
+                className="w-full px-4 py-3 border rounded-lg dark:bg-gray-700 dark:text-white"
                 required
               />
             </div>
+
+            {/* Email */}
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 <FaEnvelope className="inline mr-2 text-green-500" /> Email
               </label>
               <input
-                id="email"
-                type="email"
                 name="email"
+                type="email"
                 placeholder="example@email.com"
-                className="mt-1 w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition duration-150"
+                className="w-full px-4 py-3 border rounded-lg dark:bg-gray-700 dark:text-white"
                 required
               />
             </div>
+
+            {/* Role Selection */}
             <div>
-              <label
-                htmlFor="role"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 <FaIdBadge className="inline mr-2 text-green-500" /> Select Your
                 Role
               </label>
               <select
-                id="role"
                 name="role"
-                className="mt-1 w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition duration-150"
+                className="w-full px-4 py-3 border rounded-lg dark:bg-gray-700 dark:text-white"
                 required
               >
                 <option value="buyer">Buyer</option>
                 <option value="manager">Manager</option>
-                <option value="manager">Admin</option>
               </select>
             </div>
+
+            {/* Photo URL */}
             <div>
-              <label
-                htmlFor="photo"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 <FaCamera className="inline mr-2 text-green-500" /> Photo URL
                 (Optional)
               </label>
               <input
-                id="photo"
-                type="text"
                 name="photo"
+                type="text"
                 placeholder="Your photo URL"
-                className="mt-1 w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition duration-150"
+                className="w-full px-4 py-3 border rounded-lg dark:bg-gray-700 dark:text-white"
               />
             </div>
+
+            {/* Password */}
             <div className="relative">
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 <FaLock className="inline mr-2 text-green-500" /> Password
               </label>
               <input
-                id="password"
-                type={show ? "text" : "password"}
                 name="password"
+                type={show ? "text" : "password"}
                 placeholder="••••••••"
-                className="mt-1 w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition duration-150"
+                className="w-full px-4 py-3 border rounded-lg dark:bg-gray-700 dark:text-white"
                 required
               />
               <span
                 onClick={() => setShow(!show)}
-                className="absolute right-3 top-[42px] cursor-pointer text-green-600 dark:text-green-400 text-xl"
+                className="absolute right-3 top-[42px] cursor-pointer text-green-600 text-xl"
               >
                 {show ? <IoEyeOff /> : <FaEye />}
               </span>
             </div>
+
             {passwordError && (
-              <p className="mt-1 text-sm text-red-600 font-medium dark:text-red-400">
+              <p className="text-sm text-red-600 font-medium">
                 {passwordError}
               </p>
             )}
+
             <button
               type="submit"
-              className="w-full py-3 px-4 cursor-pointer bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition duration-300 shadow-md"
+              className="w-full py-3 px-4 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition shadow-md"
             >
               Register Account
             </button>
-            <div className="mt-5 border-t border-gray-200 dark:border-gray-600 pt-5">
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <div className="h-px w-full bg-gray-200 dark:bg-gray-600"></div>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  OR
-                </span>
-                <div className="h-px w-full bg-gray-200 dark:bg-gray-600"></div>
-              </div>
+
+            <div className="mt-5 border-t pt-5">
               <button
                 onClick={handleGoogleSignup}
                 type="button"
-                className="w-full cursor-pointer flex items-center justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-base font-medium text-gray-700 dark:text-white bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition duration-150"
+                className="w-full flex items-center justify-center py-2 px-4 border rounded-lg dark:text-white hover:bg-gray-50 dark:hover:bg-gray-600 transition"
               >
-                <FaGoogle className="mr-3 text-red-500 text-xl" />
-                Sign up with Google
+                <FaGoogle className="mr-3 text-red-500 text-xl" /> Sign up with
+                Google
               </button>
             </div>
-            <div className="text-center mt-3">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Already have an account?
-                <Link
-                  to="/login"
-                  className="text-green-600 dark:text-green-400 hover:underline font-medium ml-1"
-                >
-                  Login Here
-                </Link>
-              </p>
-            </div>
+
+            <p className="text-center text-sm text-gray-500 mt-3">
+              Already have an account?{" "}
+              <Link
+                to="/login"
+                className="text-green-600 font-medium hover:underline"
+              >
+                Login Here
+              </Link>
+            </p>
           </form>
         </div>
       </Container>
-      <ToastContainer />
     </div>
   );
 };

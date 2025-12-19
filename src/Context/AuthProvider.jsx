@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -12,6 +12,7 @@ import {
 import { auth } from "../Firebase/firebase.config";
 import axios from "axios";
 
+// ১. কনটেক্সট তৈরি
 export const AuthContext = createContext(null);
 const googleProvider = new GoogleAuthProvider();
 const API = import.meta.env.VITE_SERVER_API || "http://localhost:5000";
@@ -75,24 +76,23 @@ const AuthProvider = ({ children }) => {
         try {
           const email = currentUser.email;
 
-          // ১. JWT সেট করা
+          // JWT টোকেন সেট করা
           await axios.post(
             `${API}/api/v1/auth/jwt`,
             { email },
             { withCredentials: true }
           );
 
-          // ২. ডাটাবেস থেকে রোল ও স্ট্যাটাস আনা
+          // ডাটাবেস থেকে রোল ও স্ট্যাটাস আনা
           const res = await axios.get(`${API}/api/v1/users/role/${email}`, {
             withCredentials: true,
           });
 
-          // ডাটাবেস থেকে আসা "Manager" এবং "verified" সেট করা
-          setUserRole(res.data.role);
-          setUserStatus(res.data.status);
+          setUserRole(res.data.role || "buyer");
+          setUserStatus(res.data.status || "pending");
         } catch (error) {
-          console.error("Role fetch failed:", error);
-          setUserRole("Buyer"); // fallback
+          console.error("Role/JWT fetch failed:", error);
+          setUserRole("buyer");
           setUserStatus("pending");
         } finally {
           setIsRoleLoading(false);

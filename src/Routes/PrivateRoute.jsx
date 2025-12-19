@@ -1,6 +1,6 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "../Context/AuthProvider"; // আপনার তৈরি করা useAuth হুক
+import useAuth from "../hooks/useAuth";
 
 const PrivateRoute = ({ children }) => {
   // AuthContext থেকে user এবং loading স্টেটগুলি অ্যাক্সেস করা

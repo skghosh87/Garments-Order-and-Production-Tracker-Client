@@ -120,7 +120,7 @@ const HowItWorks = () => {
       </Container>
 
       {/* কাস্টম স্টাইল */}
-      <style jsx>{`
+      <style>{`
         .swiper-pagination-bullet-active {
           background: #22c55e !important;
           width: 20px !important;

@@ -1,26 +1,37 @@
 import { useState } from "react";
-import axios from "axios";
 import Swal from "sweetalert2";
-import { FaSpinner } from "react-icons/fa";
+import { FaSpinner, FaBoxOpen } from "react-icons/fa";
 import useAuth from "../../../hooks/useAuth";
+import useAxiosSecure from "../../../hooks/useAxiosSecure"; // আপনার কাস্টম হুক
 
 const AddProduct = () => {
   const { user } = useAuth();
+  const axiosSecure = useAxiosSecure(); // সুরক্ষিত এক্সিওস
   const [loading, setLoading] = useState(false);
 
   const handleAddProduct = async (e) => {
     e.preventDefault();
-    setLoading(true);
-
     const form = e.target;
 
-    // ১. product অবজেক্টে quantity ফিল্ড যুক্ত করা হয়েছে
+    const price = Number(form.price.value);
+    const quantity = Number(form.quantity.value);
+    const minOrderQty = Number(form.minOrderQty.value);
+
+    // লজিক্যাল ভ্যালিডেশন
+    if (minOrderQty > quantity) {
+      return Swal.fire(
+        "Warning",
+        "Minimum order cannot exceed stock!",
+        "warning"
+      );
+    }
+
     const product = {
       name: form.name.value,
       category: form.category.value,
-      price: Number(form.price.value),
-      quantity: Number(form.quantity.value), // নতুন যুক্ত করা হয়েছে
-      minOrderQty: Number(form.minOrderQty.value),
+      price,
+      quantity,
+      minOrderQty,
       description: form.description.value,
       image: form.image.value,
       status: "active",
@@ -29,135 +40,150 @@ const AddProduct = () => {
     };
 
     try {
-      await axios.post(
-        `${import.meta.env.VITE_SERVER_API}/api/v1/products`,
-        product,
-        { withCredentials: true }
-      );
+      setLoading(true);
+      const res = await axiosSecure.post("/api/v1/products", product);
 
-      Swal.fire("Success", "Product added successfully!", "success");
-      form.reset();
+      if (res.data.insertedId) {
+        Swal.fire({
+          title: "Success!",
+          text: "Product added successfully!",
+          icon: "success",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+        form.reset();
+      }
     } catch (error) {
-      Swal.fire("Error", "Failed to add product", "error");
-      console.error(error);
+      Swal.fire(
+        "Error",
+        error.response?.data?.message || "Failed to add product",
+        "error"
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow-md border border-gray-100">
-      <h1 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-3">
-        Add New Product
-      </h1>
+    <div className="max-w-4xl mx-auto my-10 bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+      <div className="flex items-center gap-3 mb-8 border-b pb-4">
+        <FaBoxOpen className="text-3xl text-green-600" />
+        <h1 className="text-3xl font-bold text-gray-800">Add New Product</h1>
+      </div>
 
-      <form onSubmit={handleAddProduct} className="space-y-4">
+      <form
+        onSubmit={handleAddProduct}
+        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+      >
         {/* Product Name */}
-        <div className="form-control">
-          <label className="label font-semibold">Product Name</label>
+        <div className="form-control md:col-span-2">
+          <label className="label font-bold text-gray-700">Product Name</label>
           <input
-            type="text"
             name="name"
+            type="text"
             required
-            className="input input-bordered w-full focus:outline-green-500"
-            placeholder="Cotton T-Shirt"
+            className="input input-bordered focus:ring-2 focus:ring-green-400"
+            placeholder="Premium Silk Saree"
           />
         </div>
 
         {/* Category */}
         <div className="form-control">
-          <label className="label font-semibold">Category</label>
+          <label className="label font-bold text-gray-700">Category</label>
           <select
             name="category"
             required
-            className="select select-bordered w-full focus:outline-green-500"
+            className="select select-bordered focus:ring-2 focus:ring-green-400"
           >
             <option value="">Select Category</option>
-            <option value="t-shirt">T-Shirt</option>
-            <option value="shirt">Shirt</option>
-            <option value="jacket">Jacket</option>
-            <option value="pants">Pants</option>
+            <option value="T-Shirt">T-Shirt</option>
+            <option value="Shirt">Shirt</option>
+            <option value="Panjabi">Panjabi</option>
+            <option value="Saree">Saree</option>
           </select>
         </div>
 
-        {/* Price & Quantity (একই লাইনে সাজানো হয়েছে) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="form-control">
-            <label className="label font-semibold">Price (per unit)</label>
-            <input
-              type="number"
-              name="price"
-              required
-              min="1"
-              className="input input-bordered w-full focus:outline-green-500"
-              placeholder="e.g. 50"
-            />
-          </div>
-
-          {/* ২. নতুন Quantity ইনপুট ফিল্ড */}
-          <div className="form-control">
-            <label className="label font-semibold">Available Quantity</label>
-            <input
-              type="number"
-              name="quantity"
-              required
-              min="0"
-              className="input input-bordered w-full focus:outline-green-500"
-              placeholder="e.g. 500"
-            />
-          </div>
+        {/* Price */}
+        <div className="form-control">
+          <label className="label font-bold text-gray-700">Price ($)</label>
+          <input
+            name="price"
+            type="number"
+            min="1"
+            required
+            className="input input-bordered focus:ring-2 focus:ring-green-400"
+            placeholder="500"
+          />
         </div>
 
-        {/* Minimum Order Qty & Image URL */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="form-control">
-            <label className="label font-semibold">Minimum Order Qty</label>
-            <input
-              type="number"
-              name="minOrderQty"
-              required
-              min="1"
-              className="input input-bordered w-full focus:outline-green-500"
-              placeholder="e.g. 10"
-            />
-          </div>
+        {/* Quantity */}
+        <div className="form-control">
+          <label className="label font-bold text-gray-700">
+            Stock Quantity
+          </label>
+          <input
+            name="quantity"
+            type="number"
+            min="1"
+            required
+            className="input input-bordered focus:ring-2 focus:ring-green-400"
+            placeholder="100"
+          />
+        </div>
 
-          <div className="form-control">
-            <label className="label font-semibold">Product Image URL</label>
-            <input
-              type="url"
-              name="image"
-              required
-              className="input input-bordered w-full focus:outline-green-500"
-              placeholder="https://example.com/image.jpg"
-            />
-          </div>
+        {/* Min Order */}
+        <div className="form-control">
+          <label className="label font-bold text-gray-700">Min Order Qty</label>
+          <input
+            name="minOrderQty"
+            type="number"
+            min="1"
+            required
+            className="input input-bordered focus:ring-2 focus:ring-green-400"
+            placeholder="5"
+          />
+        </div>
+
+        {/* Image URL */}
+        <div className="form-control md:col-span-2">
+          <label className="label font-bold text-gray-700">Image URL</label>
+          <input
+            name="image"
+            type="url"
+            required
+            className="input input-bordered focus:ring-2 focus:ring-green-400"
+            placeholder="https://imgur.com/example.jpg"
+          />
         </div>
 
         {/* Description */}
-        <div className="form-control">
-          <label className="label font-semibold">Description</label>
+        <div className="form-control md:col-span-2">
+          <label className="label font-bold text-gray-700">
+            Product Description
+          </label>
           <textarea
             name="description"
-            rows="4"
+            rows="3"
             required
-            className="textarea textarea-bordered w-full focus:outline-green-500"
-            placeholder="Product details..."
+            className="textarea textarea-bordered focus:ring-2 focus:ring-green-400"
+            placeholder="Describe your product materials, size guide, etc."
           ></textarea>
         </div>
 
         {/* Submit Button */}
-        <button
-          disabled={loading}
-          type="submit"
-          className="btn btn-success w-full text-white shadow-md hover:bg-green-700 transition-colors cursor-pointer"
-        >
-          {loading ? (
-            <FaSpinner className="animate-spin text-lg" />
-          ) : (
-            "Add Product"
-          )}
-        </button>
+        <div className="md:col-span-2 mt-4">
+          <button
+            disabled={loading}
+            type="submit"
+            className="btn btn-block bg-green-600 hover:bg-green-700 text-white border-none text-lg"
+          >
+            {loading ? (
+              <FaSpinner className="animate-spin text-xl" />
+            ) : (
+              "Publish Product"
+            )}
+          </button>
+        </div>
       </form>
     </div>
   );

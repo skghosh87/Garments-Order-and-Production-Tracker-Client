@@ -11,9 +11,9 @@ import NotFound from "../Pages/NotFound";
 
 // ড্যাশবোর্ড পেজ ইম্পোর্ট
 import MyOrders from "../Pages/Dashboard/Buyer/MyOrders";
-// import TrackOrder from "../Pages/Dashboard/Buyer/TrackOrder";
+import TrackOrder from "../Pages/Dashboard/Buyer/TrackOrder";
 import ManageUsers from "../Pages/Dashboard/Admin/ManageUsers";
-// import AdminAllProducts from "../Pages/Dashboard/Admin/AdminAllProducts"; // Admin All Products
+import AdminAllProducts from "../Pages/Dashboard/Admin/AdminAllProducts"; // Admin All Products
 import AllOrders from "../Pages/Dashboard/Admin/AllOrders"; // Admin All Orders
 import AddProduct from "../Pages/Dashboard/Manager/AddProduct";
 import ManageProducts from "../Pages/Dashboard/Manager/ManageProducts";
@@ -22,6 +22,7 @@ import ApprovedOrders from "../Pages/Dashboard/Manager/ApprovedOrders";
 import AboutUs from "../Pages/AboutUs";
 import Contact from "../Pages/Contact";
 import Profile from "../Pages/Dashboard/Shared/Profile";
+import PrivateRoute from "./PrivateRoute";
 
 export const router = createBrowserRouter([
   {
@@ -82,15 +83,15 @@ export const router = createBrowserRouter([
           </RoleBasedRoute>
         ),
       },
-      // {
-      //   path: "track-order",
-      //   element: (
-      //     <RoleBasedRoute allowedRoles={["buyer"]}>
-      //       {" "}
-      //       <TrackOrder />{" "}
-      //     </RoleBasedRoute>
-      //   ),
-      // },
+      {
+        path: "track-order/:id",
+        element: (
+          <RoleBasedRoute allowedRoles={["buyer"]}>
+            {" "}
+            <TrackOrder />{" "}
+          </RoleBasedRoute>
+        ),
+      },
       // // --- ২. ম্যানেজার (Manager) রুটস (Role: manager) ---
       {
         path: "add-product",
@@ -138,15 +139,15 @@ export const router = createBrowserRouter([
           </RoleBasedRoute>
         ),
       },
-      // {
-      //   path: "all-products", // ড্যাশবোর্ড/all-products (Admin-এর জন্য)
-      //   element: (
-      //     <RoleBasedRoute allowedRoles={["admin"]}>
-      //       {" "}
-      //       <AdminAllProducts />{" "}
-      //     </RoleBasedRoute>
-      //   ),
-      // },
+      {
+        path: "all-products", // ড্যাশবোর্ড/all-products (Admin-এর জন্য)
+        element: (
+          <RoleBasedRoute allowedRoles={["admin"]}>
+            {" "}
+            <AdminAllProducts />{" "}
+          </RoleBasedRoute>
+        ),
+      },
       {
         path: "all-orders", // ড্যাশবোর্ড/all-orders (Admin-এর জন্য)
         element: (
@@ -158,13 +159,11 @@ export const router = createBrowserRouter([
       },
       // // --- ৪. শেয়ার্ড প্রোফাইল রুট (সকলের জন্য) ---
       {
-        // /dashboard/profile
         path: "profile",
         element: (
-          <RoleBasedRoute allowedRoles={["admin", "manager", "buyer"]}>
-            {" "}
-            <Profile />{" "}
-          </RoleBasedRoute>
+          <PrivateRoute>
+            <Profile />
+          </PrivateRoute>
         ),
       },
     ],

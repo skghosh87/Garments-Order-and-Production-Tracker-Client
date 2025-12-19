@@ -1,11 +1,11 @@
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import useAuth from "./useAuth"; // আপনার তৈরি করা কাস্টম হুক
+import useAuth from "./useAuth";
 
 const axiosSecure = axios.create({
-  baseURL: "http://localhost:5000", // আপনার সার্ভারের URL
-  withCredentials: true, // যদি কুকি ব্যবহার করেন তবে এটি জরুরি
+  baseURL: import.meta.env.VITE_SERVER_API || "http://localhost:5000",
+  withCredentials: true, // কুকি আদান-প্রদানের জন্য এটিই প্রধান
 });
 
 const useAxiosSecure = () => {
@@ -13,36 +13,21 @@ const useAxiosSecure = () => {
   const { logOut } = useAuth();
 
   useEffect(() => {
-    // ১. Request Interceptor: প্রতিটি রিকোয়েস্টের সাথে টোকেন পাঠানো
-    const requestInterceptor = axiosSecure.interceptors.request.use(
-      (config) => {
-        const token = localStorage.getItem("access-token");
-        if (token) {
-          config.headers.authorization = `Bearer ${token}`;
-        }
-        return config;
-      },
-      (error) => {
-        return Promise.reject(error);
-      }
-    );
-
-    // ২. Response Interceptor: ৪০১ বা ৪০৩ এরর হ্যান্ডেল করা (JWT Challenge)
+    // শুধুমাত্র Response Interceptor প্রয়োজন (Error handling এর জন্য)
     const responseInterceptor = axiosSecure.interceptors.response.use(
       (response) => response,
       async (error) => {
         const status = error.response?.status;
+        // যদি টোকেন ইনভ্যালিড হয় বা এক্সপায়ার হয়
         if (status === 401 || status === 403) {
-          await logOut(); // ইউজারকে লগআউট করে দেওয়া
-          navigate("/login"); // লগইন পেজে পাঠিয়ে দেওয়া
+          await logOut();
+          navigate("/login");
         }
         return Promise.reject(error);
       }
     );
 
-    // ক্লিনআপ ফাংশন
     return () => {
-      axiosSecure.interceptors.request.eject(requestInterceptor);
       axiosSecure.interceptors.response.eject(responseInterceptor);
     };
   }, [logOut, navigate]);

@@ -1,32 +1,36 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { FaSpinner, FaUsersCog, FaSearch, FaUserSlash } from "react-icons/fa";
+import {
+  FaUsersCog,
+  FaSearch,
+  FaUserSlash,
+  FaSpinner,
+  FaUserShield,
+} from "react-icons/fa";
 import useAuth from "../../../hooks/useAuth";
 
 const ManageUsers = () => {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser } = useAuth(); // Logged-in admin info
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const limit = 5;
 
   const API_URL = import.meta.env.VITE_SERVER_API;
 
+  /* ================= 1. Fetch Users Dynamically ================= */
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const res = await axios.get(`${API_URL}/api/v1/users`, {
-        params: { search, role: roleFilter, page, limit },
         withCredentials: true,
       });
-      setUsers(res.data.users);
-      setTotalPages(res.data.totalPages);
+      // Logic to handle both array and paginated object responses
+      const userData = Array.isArray(res.data) ? res.data : res.data.users;
+      setUsers(userData);
     } catch (err) {
       console.error("Fetch Users Error:", err);
+      Swal.fire("Error", "Could not load users from database", "error");
     } finally {
       setLoading(false);
     }
@@ -34,124 +38,120 @@ const ManageUsers = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, [search, roleFilter, page]);
+  }, [search]);
 
-  const handleRoleChange = async (id, role) => {
+  /* ================= 2. Handle Role Change ================= */
+  const handleRoleChange = async (id, newRole) => {
     try {
-      await axios.patch(
+      const res = await axios.patch(
         `${API_URL}/api/v1/users/role/${id}`,
-        { role },
+        { role: newRole },
         { withCredentials: true }
       );
-      Swal.fire("Success!", "User role has been updated.", "success");
-      fetchUsers();
+      if (res.data.modifiedCount > 0) {
+        Swal.fire("Updated!", `User role is now ${newRole}`, "success");
+        fetchUsers();
+      }
     } catch (err) {
-      Swal.fire("Error", "Failed to update role.", "error");
+      Swal.fire("Error", "Failed to update user role", "error");
     }
   };
 
+  /* ================= 3. Handle Suspension with Reason ================= */
   const handleSuspend = async (user) => {
     const { value: formValues } = await Swal.fire({
-      title: `<span class="text-red-600">Suspend ${user.name}</span>`,
+      title: `<span style="color: #d33">Suspend: ${
+        user.displayName || "User"
+      }</span>`,
       html: `
-        <div class="flex flex-col gap-3">
-          <input id="reason" class="swal2-input m-0 w-full" placeholder="Reason (e.g. Policy Violation)">
-          <textarea id="feedback" class="swal2-textarea m-0 w-full" placeholder="Internal Feedback for the user"></textarea>
+        <div style="text-align: left; font-family: sans-serif;">
+          <label style="font-weight: bold; display: block; margin-bottom: 5px;">Suspension Reason:</label>
+          <input id="reason" class="swal2-input" style="margin: 0; width: 100%;" placeholder="e.g., Fraudulent Activity">
+          
+          <label style="font-weight: bold; display: block; margin-top: 15px; margin-bottom: 5px;">Internal Feedback:</label>
+          <textarea id="feedback" class="swal2-textarea" style="margin: 0; width: 100%; height: 80px;" placeholder="Message for the user profile..."></textarea>
         </div>
       `,
       showCancelButton: true,
       confirmButtonText: "Confirm Suspension",
       confirmButtonColor: "#d33",
-      preConfirm: () => ({
-        reason: document.getElementById("reason").value,
-        feedback: document.getElementById("feedback").value,
-      }),
+      cancelButtonColor: "#3085d6",
+      preConfirm: () => {
+        const reason = document.getElementById("reason").value;
+        const feedback = document.getElementById("feedback").value;
+        if (!reason || !feedback) {
+          Swal.showValidationMessage(
+            "Please provide both a reason and feedback"
+          );
+        }
+        return { reason, feedback };
+      },
     });
 
     if (formValues) {
-      if (!formValues.reason || !formValues.feedback) {
-        return Swal.fire(
-          "Required",
-          "Please provide both reason and feedback",
-          "error"
-        );
-      }
       try {
-        await axios.patch(
+        const res = await axios.patch(
           `${API_URL}/api/v1/users/suspend/${user._id}`,
-          { status: "suspended", ...formValues },
+          {
+            reason: formValues.reason,
+            feedback: formValues.feedback,
+          },
           { withCredentials: true }
         );
-        Swal.fire("Suspended!", "User access has been restricted.", "success");
-        fetchUsers();
+        if (res.data.modifiedCount > 0) {
+          Swal.fire(
+            "Suspended!",
+            "User access restricted successfully.",
+            "success"
+          );
+          fetchUsers();
+        }
       } catch (err) {
-        Swal.fire("Error", "Failed to suspend user.", "error");
+        Swal.fire("Error", "Action failed. Check server logs.", "error");
       }
     }
   };
 
-  if (loading && page === 1) {
+  if (loading) {
     return (
-      <div className="flex flex-col justify-center items-center min-h-[400px] space-y-4">
-        <FaSpinner className="animate-spin text-5xl text-blue-600" />
-        <p className="text-gray-500 font-medium italic text-lg">
-          Loading global user database...
-        </p>
+      <div className="flex flex-col justify-center items-center min-h-[400px]">
+        <FaSpinner className="animate-spin text-4xl text-blue-500 mb-2" />
+        <p className="text-gray-500">Syncing with database...</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700">
-      {/* Header */}
+    <div className="p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800">
+      {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
             <FaUsersCog className="text-2xl text-blue-600" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
             User Management
-          </h1>
+          </h2>
         </div>
 
-        {/* Search & Filter Bar */}
-        <div className="flex flex-wrap gap-3 w-full md:w-auto">
-          <div className="relative flex-grow">
-            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search users..."
-              className="input input-bordered pl-10 w-full md:w-64"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-            />
-          </div>
-          <select
-            className="select select-bordered"
-            value={roleFilter}
-            onChange={(e) => {
-              setRoleFilter(e.target.value);
-              setPage(1);
-            }}
-          >
-            <option value="all">All Roles</option>
-            <option value="admin">Admin</option>
-            <option value="manager">Manager</option>
-            <option value="buyer">Buyer</option>
-          </select>
+        <div className="relative w-full md:w-72">
+          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search by name or email..."
+            className="input input-bordered w-full pl-10 h-11"
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
       </div>
 
-      {/* User Table */}
-      <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-700">
+      {/* Users Table */}
+      <div className="overflow-x-auto rounded-xl">
         <table className="table w-full">
-          <thead className="bg-gray-50 dark:bg-gray-700">
-            <tr className="text-gray-600 dark:text-gray-200 uppercase text-xs font-bold">
-              <th>User Info</th>
-              <th>Role Assignment</th>
+          <thead>
+            <tr className="bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+              <th>User Information</th>
+              <th>System Role</th>
               <th className="text-center">Status</th>
               <th className="text-center">Actions</th>
             </tr>
@@ -160,50 +160,60 @@ const ManageUsers = () => {
             {users.map((u) => (
               <tr
                 key={u._id}
-                className="hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors"
+                className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
               >
                 <td>
-                  <div className="flex flex-col">
-                    <span className="font-bold text-gray-800 dark:text-gray-100">
-                      {u.name}
-                    </span>
-                    <span className="text-xs text-gray-400 font-mono italic">
-                      {u.email}
-                    </span>
+                  <div className="flex items-center gap-3">
+                    <div className="avatar placeholder">
+                      <div className="bg-indigo-100 text-indigo-600 rounded-full w-10">
+                        <span className="text-xs">
+                          {u.displayName?.charAt(0) || "U"}
+                        </span>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="font-bold text-gray-800 dark:text-gray-200">
+                        {u.displayName}
+                      </div>
+                      <div className="text-xs opacity-50 font-mono">
+                        {u.email}
+                      </div>
+                    </div>
                   </div>
                 </td>
                 <td>
                   <select
-                    value={u.role}
+                    defaultValue={u.role}
                     disabled={u.email === currentUser?.email}
                     onChange={(e) => handleRoleChange(u._id, e.target.value)}
-                    className="select select-sm select-bordered font-semibold capitalize"
+                    className="select select-sm select-bordered font-medium"
                   >
-                    <option value="admin">Admin</option>
-                    <option value="manager">Manager</option>
                     <option value="buyer">Buyer</option>
+                    <option value="manager">Manager</option>
+                    <option value="admin">Admin</option>
                   </select>
                 </td>
                 <td className="text-center">
                   <span
-                    className={`badge font-bold p-3 border-none text-white ${
-                      u.status === "active" ? "bg-green-500" : "bg-red-500"
+                    className={`badge badge-sm font-bold ${
+                      u.status === "suspended" ? "badge-error" : "badge-success"
                     }`}
                   >
                     {u.status}
                   </span>
                 </td>
                 <td className="text-center">
-                  {u.status === "active" && u.email !== currentUser?.email ? (
+                  {u.status !== "suspended" &&
+                  u.email !== currentUser?.email ? (
                     <button
                       onClick={() => handleSuspend(u)}
-                      className="btn btn-xs btn-error text-white hover:scale-110"
+                      className="btn btn-xs btn-outline btn-error hover:text-white"
                     >
                       <FaUserSlash className="mr-1" /> Suspend
                     </button>
                   ) : (
-                    <span className="text-xs text-gray-300 italic">
-                      No Action
+                    <span className="text-xs text-gray-400 italic">
+                      No Action Available
                     </span>
                   )}
                 </td>
@@ -212,23 +222,6 @@ const ManageUsers = () => {
           </tbody>
         </table>
       </div>
-
-      {/* Pagination Container */}
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-8 join">
-          {[...Array(totalPages).keys()].map((num) => (
-            <button
-              key={num}
-              onClick={() => setPage(num + 1)}
-              className={`join-item btn btn-md ${
-                page === num + 1 ? "btn-primary shadow-lg" : "btn-ghost"
-              }`}
-            >
-              {num + 1}
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 };
