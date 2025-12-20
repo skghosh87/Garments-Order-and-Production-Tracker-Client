@@ -2,11 +2,11 @@ import { useState } from "react";
 import Swal from "sweetalert2";
 import { FaSpinner, FaBoxOpen } from "react-icons/fa";
 import useAuth from "../../../hooks/useAuth";
-import useAxiosSecure from "../../../hooks/useAxiosSecure"; // আপনার কাস্টম হুক
+import useAxiosSecure from "../../../hooks/useAxiosSecure";
 
 const AddProduct = () => {
   const { user } = useAuth();
-  const axiosSecure = useAxiosSecure(); // সুরক্ষিত এক্সিওস
+  const axiosSecure = useAxiosSecure();
   const [loading, setLoading] = useState(false);
 
   const handleAddProduct = async (e) => {
@@ -180,7 +180,7 @@ const AddProduct = () => {
             {loading ? (
               <FaSpinner className="animate-spin text-xl" />
             ) : (
-              "Publish Product"
+              "Add Product"
             )}
           </button>
         </div>

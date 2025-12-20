@@ -14,7 +14,8 @@ import {
 const dashboardMenus = {
   Admin: [
     { path: "manage-users", icon: <FaUserShield />, label: "Manage Users" },
-    { path: "manage-orders", icon: <FaClipboardList />, label: "All Orders" },
+    { path: "all-orders", icon: <FaClipboardList />, label: "All Orders" },
+    { path: "all-products", icon: <FaClipboardList />, label: "All Products" },
     { path: "profile", icon: <FaUserEdit />, label: "My Profile" },
   ],
   Manager: [

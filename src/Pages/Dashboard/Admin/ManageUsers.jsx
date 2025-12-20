@@ -6,12 +6,11 @@ import {
   FaSearch,
   FaUserSlash,
   FaSpinner,
-  FaUserShield,
 } from "react-icons/fa";
 import useAuth from "../../../hooks/useAuth";
 
 const ManageUsers = () => {
-  const { user: currentUser } = useAuth(); // Logged-in admin info
+  const { user: currentUser } = useAuth(); // লগইন করা অ্যাডমিনের তথ্য
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -22,10 +21,9 @@ const ManageUsers = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/api/v1/users`, {
+      const res = await axios.get(`${API_URL}/api/v1/users?search=${search}`, {
         withCredentials: true,
       });
-      // Logic to handle both array and paginated object responses
       const userData = Array.isArray(res.data) ? res.data : res.data.users;
       setUsers(userData);
     } catch (err) {
@@ -61,7 +59,7 @@ const ManageUsers = () => {
   const handleSuspend = async (user) => {
     const { value: formValues } = await Swal.fire({
       title: `<span style="color: #d33">Suspend: ${
-        user.displayName || "User"
+        user.displayName || user.name || "User"
       }</span>`,
       html: `
         <div style="text-align: left; font-family: sans-serif;">
@@ -80,9 +78,7 @@ const ManageUsers = () => {
         const reason = document.getElementById("reason").value;
         const feedback = document.getElementById("feedback").value;
         if (!reason || !feedback) {
-          Swal.showValidationMessage(
-            "Please provide both a reason and feedback"
-          );
+          Swal.showValidationMessage("Please provide both a reason and feedback");
         }
         return { reason, feedback };
       },
@@ -99,11 +95,7 @@ const ManageUsers = () => {
           { withCredentials: true }
         );
         if (res.data.modifiedCount > 0) {
-          Swal.fire(
-            "Suspended!",
-            "User access restricted successfully.",
-            "success"
-          );
+          Swal.fire("Suspended!", "User access restricted successfully.", "success");
           fetchUsers();
         }
       } catch (err) {
@@ -164,16 +156,25 @@ const ManageUsers = () => {
               >
                 <td>
                   <div className="flex items-center gap-3">
-                    <div className="avatar placeholder">
-                      <div className="bg-indigo-100 text-indigo-600 rounded-full w-10">
-                        <span className="text-xs">
-                          {u.displayName?.charAt(0) || "U"}
-                        </span>
+                    <div className="avatar">
+                      <div className="mask mask-squircle w-12 h-12 bg-gray-100">
+                        {/* ইমেজ ফিল্ড আপডেট করা হয়েছে */}
+                        {u.photoURL ? (
+                          <img 
+                            src={u.photoURL} 
+                            alt={u.displayName || u.name} 
+                            onError={(e) => { e.target.src = 'https://i.ibb.co/0QZCv5C/default-avatar.png'; }}
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center w-full h-full bg-indigo-100 text-indigo-600 font-bold">
+                            {(u.displayName || u.name)?.charAt(0) || "U"}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div>
                       <div className="font-bold text-gray-800 dark:text-gray-200">
-                        {u.displayName}
+                        {u.displayName || u.name}
                       </div>
                       <div className="text-xs opacity-50 font-mono">
                         {u.email}
@@ -213,7 +214,7 @@ const ManageUsers = () => {
                     </button>
                   ) : (
                     <span className="text-xs text-gray-400 italic">
-                      No Action Available
+                      {u.email === currentUser?.email ? "Logged In Admin" : "Suspended"}
                     </span>
                   )}
                 </td>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import Swal from "sweetalert2";
 import {
   FaSpinner,
   FaClipboardList,
@@ -30,6 +31,29 @@ const AllOrders = () => {
     fetchAllOrders();
   }, []);
 
+  // স্ট্যাটাস আপডেট ফাংশন
+  const handleStatusUpdate = async (id, newStatus) => {
+    try {
+      const res = await axios.patch(
+        `${API_URL}/api/v1/orders/status/${id}`,
+        { status: newStatus },
+        { withCredentials: true }
+      );
+      if (res.data.modifiedCount > 0 || res.data.success) {
+        Swal.fire({
+          title: "Updated!",
+          text: `Order is now ${newStatus}`,
+          icon: "success",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+        fetchAllOrders(); // ডেটা রিফ্রেশ
+      }
+    } catch (error) {
+      Swal.fire("Error", "Failed to update status", "error");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center min-h-[400px] space-y-4">
@@ -54,7 +78,7 @@ const AllOrders = () => {
               System Orders
             </h1>
             <p className="text-sm text-gray-500">
-              Monitor all transactions across the platform
+              Monitor and manage all transactions
             </p>
           </div>
         </div>
@@ -62,12 +86,12 @@ const AllOrders = () => {
         <div className="stats shadow bg-gray-50 dark:bg-gray-700">
           <div className="stat py-2 px-6">
             <div className="stat-title text-xs font-bold uppercase">
-              Total Volume
+              Total Revenue
             </div>
             <div className="stat-value text-2xl text-blue-600">
               $
               {orders
-                .reduce((acc, curr) => acc + curr.totalPrice, 0)
+                .reduce((acc, curr) => acc + (curr.totalPrice || 0), 0)
                 .toLocaleString()}
             </div>
           </div>
@@ -83,32 +107,36 @@ const AllOrders = () => {
       ) : (
         <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-700">
           <table className="table w-full">
-            {/* head */}
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr className="text-gray-600 dark:text-gray-200 uppercase text-[11px] font-black tracking-widest">
-                <th className="py-4">#</th>
-                <th className="py-4">Buyer Details</th>
-                <th className="py-4">Product Info</th>
+                <th className="py-4">Buyer</th>
+                <th className="py-4">Product</th>
                 <th className="py-4 text-center">Qty</th>
                 <th className="py-4 text-right">Revenue</th>
-                <th className="py-4 text-center">Current Status</th>
-                <th className="py-4 text-right">Timestamp</th>
+                <th className="py-4 text-center">Status</th>
+                <th className="py-4 text-center">Actions</th>
+                <th className="py-4 text-right">Date</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
-              {orders.map((order, index) => (
+              {orders.map((order) => (
                 <tr
                   key={order._id}
                   className="hover:bg-blue-50/30 dark:hover:bg-gray-700/50 transition-colors"
                 >
-                  <td className="font-mono text-gray-400">{index + 1}</td>
                   <td>
                     <div className="flex items-center gap-2">
-                      <FaUserCircle className="text-gray-300 text-xl" />
+                      {/* সমাধান ১: ছবি দেখানো */}
+                      {order.buyerPhoto || order.photoURL ? (
+                        <img
+                          src={order.buyerPhoto || order.photoURL}
+                          alt="Buyer"
+                          className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                        />
+                      ) : (
+                        <FaUserCircle className="text-gray-300 text-2xl" />
+                      )}
                       <div className="flex flex-col">
-                        <span className="font-bold text-gray-700 dark:text-gray-200 leading-none mb-1">
-                          Buyer
-                        </span>
                         <span className="text-[10px] text-gray-400 font-medium">
                           {order.buyerEmail}
                         </span>
@@ -121,41 +149,52 @@ const AllOrders = () => {
                         {order.productName}
                       </span>
                       <span className="text-[9px] font-mono text-gray-400">
-                        ID: {order._id.slice(-8)}
+                        ID: {order._id.slice(-6)}
                       </span>
                     </div>
                   </td>
-                  <td className="text-center font-bold text-gray-600 dark:text-gray-300">
-                    {order.quantity}
-                  </td>
-                  <td className="text-right font-black text-blue-600 dark:text-blue-400">
+                  <td className="text-center font-bold">{order.quantity}</td>
+                  <td className="text-right font-black text-blue-600">
                     ${order.totalPrice?.toLocaleString()}
                   </td>
                   <td className="text-center">
                     <span
-                      className={`badge badge-sm font-bold py-3 px-4 border-none text-[10px] uppercase tracking-tighter ${
+                      className={`badge badge-sm font-bold py-3 px-4 text-[10px] uppercase border-none ${
                         order.status === "pending"
                           ? "bg-amber-100 text-amber-700"
                           : order.status === "approved"
                           ? "bg-emerald-100 text-emerald-700"
-                          : "bg-rose-100 text-rose-700"
+                          : "bg-blue-100 text-blue-700"
                       }`}
                     >
                       {order.status}
                     </span>
                   </td>
+                  <td className="text-center">
+                    <select
+                      value={order.status}
+                      onChange={(e) =>
+                        handleStatusUpdate(order._id, e.target.value)
+                      }
+                      className="select select-bordered select-xs w-full max-w-[120px] focus:outline-none"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="approved">Approved</option>
+                      <option value="shipped">Shipped</option>
+                      <option value="delivered">Delivered</option>
+                    </select>
+                  </td>
                   <td className="text-right">
                     <div className="flex flex-col items-end">
                       <div className="flex items-center gap-1 text-[11px] font-bold text-gray-600 dark:text-gray-300">
                         <FaCalendarAlt className="text-[9px]" />
-                        {new Date(order.createdAt).toLocaleDateString("en-GB")}
+                        {/* সমাধান ২: তারিখ ফিক্স */}
+                        {order.createdAt
+                          ? new Date(order.createdAt).toLocaleDateString(
+                              "en-GB"
+                            )
+                          : "N/A"}
                       </div>
-                      <span className="text-[9px] text-gray-400">
-                        {new Date(order.createdAt).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
                     </div>
                   </td>
                 </tr>
