@@ -39,6 +39,7 @@ const dashboardMenus = {
   ],
   Buyer: [
     { path: "my-orders", icon: <FaClipboardList />, label: "My Orders" },
+    { path: "track-order", icon: <FaClipboardList />, label: "Tracking Orders" },
     { path: "profile", icon: <FaUserEdit />, label: "My Profile" },
   ],
 };

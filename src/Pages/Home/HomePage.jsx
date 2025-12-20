@@ -3,8 +3,9 @@ import HeroBanner from "../../Components/HomePageSection/HeroBanner";
 import OurProducts from "../../Components/HomePageSection/OurProducts";
 import CustomerFeedback from "../../Components/HomePageSection/CustomerFeedback";
 import HowItWorks from "../../Components/HomePageSection/HowItWorks";
-import ExtraSection from "../../Components/HomePageSection/ExtraSection";
-import ImpactStats from "../../Components/HomePageSection/ImpactStats";
+import LogoShowcase from "../../Components/HomePageSection/LogoShowcase";
+import StatsNewsletter from "../../Components/HomePageSection/StatsNewsletter";
+
 
 const HomePage = () => {
   return (
@@ -22,8 +23,8 @@ const HomePage = () => {
       <CustomerFeedback />
 
       {/* 5. Two Extra Sections */}
-      <ImpactStats />
-      <ExtraSection sectionType="partners" />
+      <LogoShowcase/>
+      <StatsNewsletter/>
     </div>
   );
 };
