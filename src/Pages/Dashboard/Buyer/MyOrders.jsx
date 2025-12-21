@@ -1,14 +1,22 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { FaSpinner, FaShoppingBag, FaTrashAlt, FaCalendarAlt } from "react-icons/fa";
+import {
+  FaSpinner,
+  FaEye,
+  FaTrashAlt,
+  FaHistory,
+  FaShoppingBag,
+} from "react-icons/fa";
+import useAuth from "../../../hooks/useAuth";
+import { Link } from "react-router-dom"; // react-router-dom নিশ্চিত করুন
 
 const MyOrders = () => {
+  const { user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const API_URL = import.meta.env.VITE_SERVER_API;
 
-  /* ================= Fetch My Orders ================= */
   const fetchOrders = async () => {
     setLoading(true);
     try {
@@ -24,136 +32,159 @@ const MyOrders = () => {
   };
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    if (user?.email) {
+      fetchOrders();
+    }
+  }, [user?.email]);
 
-  /* ================= Cancel Order (Only if Pending) ================= */
   const handleCancel = async (orderId) => {
     const confirm = await Swal.fire({
       title: "Are you sure?",
-      text: "Do you want to cancel this pending order?",
+      text: "আপনি কি নিশ্চিত যে আপনি এই অর্ডারটি বাতিল করতে চান?",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#6b7280",
-      confirmButtonText: "Yes, cancel it!",
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, Cancel it!",
     });
 
-    if (!confirm.isConfirmed) return;
-
-    try {
-      const res = await axios.patch(
-        `${API_URL}/api/v1/orders/cancel/${orderId}`,
-        {},
-        { withCredentials: true }
-      );
-
-      if (res.data.modifiedCount > 0) {
-        Swal.fire("Cancelled!", "Your order has been cancelled.", "success");
-        fetchOrders(); // লিস্ট রিফ্রেশ করা
+    if (confirm.isConfirmed) {
+      try {
+        const res = await axios.patch(
+          `${API_URL}/api/v1/orders/cancel/${orderId}`,
+          {},
+          { withCredentials: true }
+        );
+        if (res.data.modifiedCount > 0) {
+          Swal.fire(
+            "Cancelled!",
+            "অর্ডারটি সফলভাবে বাতিল করা হয়েছে।",
+            "success"
+          );
+          fetchOrders();
+        }
+      } catch (err) {
+        Swal.fire("Error", "বাতিল করা সম্ভব হয়নি, আবার চেষ্টা করুন।", "error");
       }
-    } catch (err) {
-      Swal.fire("Error", "Failed to cancel order. Please try again.", "error");
     }
   };
 
-  if (loading) {
+  if (loading)
     return (
-      <div className="flex flex-col justify-center items-center min-h-[400px] space-y-4">
-        <FaSpinner className="animate-spin text-5xl text-blue-500" />
-        <p className="text-gray-500 font-medium animate-pulse">Loading your orders...</p>
+      <div className="flex flex-col justify-center items-center min-h-[400px]">
+        <FaSpinner className="animate-spin text-5xl text-blue-600 mb-4" />
+        <p className="text-gray-500 font-bold uppercase tracking-widest">
+          Loading Orders...
+        </p>
       </div>
     );
-  }
 
   return (
-    <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-blue-100 rounded-lg">
-            <FaShoppingBag className="text-2xl text-blue-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">My Purchase History</h1>
-            <p className="text-sm text-gray-500">Track and manage your orders</p>
-          </div>
+    <div className="bg-white p-6 rounded-3xl shadow-xl border border-gray-50">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-10 bg-gray-50 p-6 rounded-2xl">
+        <div className="flex items-center gap-4">
+          <FaHistory className="text-3xl text-blue-600" />
+          <h2 className="text-2xl font-black text-gray-800 uppercase tracking-tight">
+            Purchase History
+          </h2>
         </div>
-        <div className="bg-blue-50 px-4 py-2 rounded-full border border-blue-100">
-          <span className="text-blue-700 font-bold text-sm">Total Orders: {orders.length}</span>
+        <div className="px-6 py-2 bg-blue-600 text-white rounded-xl font-black shadow-lg shadow-blue-200">
+          TOTAL: {orders.length}
         </div>
       </div>
 
-      {orders.length === 0 ? (
-        <div className="text-center py-20 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-          <p className="text-gray-500 italic text-lg">You have not placed any orders yet.</p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto rounded-xl border border-gray-100">
-          <table className="table w-full">
-            <thead className="bg-gray-50 text-gray-700">
-              <tr className="uppercase text-[12px] tracking-wider">
-                <th>#</th>
-                <th>Product Name</th>
-                <th className="text-center">Quantity</th>
-                <th className="text-right">Total Price</th>
-                <th className="text-center">Status</th>
-                <th className="text-center">Action</th>
+      <div className="overflow-x-auto rounded-xl">
+        <table className="table w-full border-separate border-spacing-y-3">
+          <thead>
+            <tr className="text-gray-400 uppercase text-[12px] font-black border-none">
+              <th className="bg-transparent">Order ID</th>
+              <th className="bg-transparent">Product</th>
+              <th className="bg-transparent">Quantity</th>
+              <th className="bg-transparent">Status</th>
+              <th className="bg-transparent">Total Price</th>
+              <th className="bg-transparent text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders.length === 0 ? (
+              <tr>
+                <td
+                  colSpan="6"
+                  className="text-center py-20 bg-gray-50 rounded-2xl"
+                >
+                  <FaShoppingBag className="mx-auto text-4xl text-gray-300 mb-4" />
+                  <p className="text-gray-500 font-bold uppercase italic">
+                    No orders found yet!
+                  </p>
+                </td>
               </tr>
-            </thead>
-
-            <tbody className="divide-y divide-gray-100">
-              {orders.map((order, index) => (
-                <tr key={order._id} className="hover:bg-gray-50 transition-colors">
-                  <td className="text-gray-400 font-mono">{index + 1}</td>
-                  <td>
-                    <div className="flex flex-col">
-                      <span className="font-bold text-gray-700">{order.productName}</span>
-                      <div className="flex items-center gap-1 text-[10px] text-gray-400 mt-1">
-                        <FaCalendarAlt className="text-[9px]" />
-                        {/* তারিখের জন্য ডাটাবেসের orderDate ফিল্ড ব্যবহার করা হয়েছে */}
-                        {order.orderDate ? new Date(order.orderDate).toLocaleDateString("en-GB") : "Date N/A"}
-                      </div>
+            ) : (
+              orders.map((order) => (
+                <tr
+                  key={order._id}
+                  className="bg-white shadow-sm hover:shadow-md transition-all group"
+                >
+                  <td className="rounded-l-2xl border-y border-l border-gray-100 font-mono text-xs font-bold text-blue-600">
+                    #{order._id.slice(-8)}
+                  </td>
+                  <td className="border-y border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={order.image}
+                        className="w-12 h-12 rounded-xl object-cover border border-gray-100 shadow-sm"
+                        alt={order.productName}
+                      />
+                      <span className="font-bold text-gray-800 text-sm tracking-tight">
+                        {order.productName}
+                      </span>
                     </div>
                   </td>
-                  {/* কোয়ান্টিটির জন্য ডাটাবেসের orderQuantity ফিল্ড ব্যবহার করা হয়েছে */}
-                  <td className="text-center font-medium">
-                    {order.orderQuantity || 0} pcs
+                  <td className="border-y border-gray-100 font-black text-gray-500">
+                    {order.orderQuantity}{" "}
+                    <span className="text-[10px] uppercase">Units</span>
                   </td>
-                  <td className="text-right font-black text-blue-600">
-                    ${order.totalPrice?.toLocaleString()}
-                  </td>
-                  <td className="text-center">
+                  <td className="border-y border-gray-100">
                     <span
-                      className={`badge badge-sm font-bold p-3 border-none text-white uppercase text-[10px] ${
-                        order.status === "pending" ? "bg-amber-500" : 
-                        order.status === "approved" ? "bg-emerald-500" : 
-                        "bg-rose-500"
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider ${
+                        order.status === "pending"
+                          ? "bg-amber-100 text-amber-700"
+                          : "bg-emerald-100 text-emerald-700"
                       }`}
                     >
                       {order.status}
                     </span>
                   </td>
-                  <td className="text-center">
-                    {order.status === "pending" ? (
-                      <button
-                        onClick={() => handleCancel(order._id)}
-                        className="btn btn-xs btn-error btn-outline hover:text-white transition-all flex items-center gap-1 mx-auto"
+                  <td className="border-y border-gray-100 font-black text-gray-800">
+                    ${order.totalPrice?.toLocaleString()}
+                  </td>
+                  <td className="rounded-r-2xl border-y border-r border-gray-100 text-center">
+                    <div className="flex justify-center gap-3">
+                      {/* View Button */}
+                      <Link
+                        to={`/dashboard/track-order/${order._id}`}
+                        className="bg-blue-50 text-blue-600 p-3 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm flex items-center gap-2 text-[11px] font-black uppercase"
                       >
-                        <FaTrashAlt className="text-[10px]" /> Cancel
-                      </button>
-                    ) : (
-                      <span className="text-gray-300 text-[10px] font-bold uppercase italic">
-                        No Action
-                      </span>
-                    )}
+                        <FaEye /> View
+                      </Link>
+
+                      {/* Cancel Button - Only show if status is pending */}
+                      {order.status === "pending" && (
+                        <button
+                          onClick={() => handleCancel(order._id)}
+                          className="bg-red-50 text-red-600 p-3 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm flex items-center gap-2 text-[11px] font-black uppercase"
+                        >
+                          <FaTrashAlt /> Cancel
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

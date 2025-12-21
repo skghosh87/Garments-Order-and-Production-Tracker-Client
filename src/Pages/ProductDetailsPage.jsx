@@ -15,7 +15,7 @@ import {
 import { ToastContainer } from "react-toastify";
 
 import Container from "../Components/Shared/Container";
-import PlaceOrderModal from "../Components/Modals/PlaceOrderModal"; 
+import PlaceOrderModal from "../Components/Modals/PlaceOrderModal";
 import useAuth from "../hooks/useAuth";
 
 const ProductDetailsPage = () => {
@@ -44,7 +44,7 @@ const ProductDetailsPage = () => {
         setProduct(response.data);
       } catch (err) {
         console.error("Error fetching product details:", err);
-        setError("দুঃখিত! এই প্রোডাক্টটির কোনো তথ্য পাওয়া যায়নি।");
+        setError("দুঃখিত! এই প্রোডাক্টটির কোনো তথ্য পাওয়া যায়নি।");
       } finally {
         setDataLoading(false);
       }
@@ -68,29 +68,45 @@ const ProductDetailsPage = () => {
   if (error || !product) {
     return (
       <div className="text-center py-20 bg-gray-50 dark:bg-gray-900 min-h-screen flex flex-col items-center justify-center">
-        <h2 className="text-2xl font-bold text-red-500">{error || "Product Not Found"}</h2>
-        <button onClick={() => navigate(-1)} className="mt-6 flex items-center gap-2 px-6 py-2 bg-slate-800 text-white rounded-lg hover:bg-black transition">
+        <h2 className="text-2xl font-bold text-red-500">
+          {error || "Product Not Found"}
+        </h2>
+        <button
+          onClick={() => navigate(-1)}
+          className="mt-6 flex items-center gap-2 px-6 py-2 bg-slate-800 text-white rounded-lg hover:bg-black transition"
+        >
           <FaChevronLeft /> Go Back
         </button>
       </div>
     );
   }
 
-  const { name, image, price, category, quantity, description, minOrder, paymentOptions } = product;
+  const {
+    name,
+    image,
+    price,
+    category,
+    quantity,
+    description,
+    minOrderQty,
+    paymentOptions,
+  } = product;
 
-  // --- কন্ডিশনাল লজিক (শর্তানুযায়ী আপডেট করা হয়েছে) ---
-  const isBuyer = userRole === "buyer" || userRole === "Buyer";
-  // এখন 'verified' অথবা 'approved' যেকোনোটি হলেই অর্ডার এনাবল হবে
-  const isAuthorized = userStatus === "verified" || userStatus === "approved";
-  const isSuspended = userStatus === "suspended";
+  // --- কন্ডিশনাল লজিক (নিরাপদ এবং Case-insensitive আপডেট) ---
+  const currentRole = userRole?.toLowerCase();
+  const currentStatus = userStatus?.toLowerCase();
+
+  const isBuyer = currentRole === "buyer";
+  const isAuthorized =
+    currentStatus === "verified" || currentStatus === "approved";
+  const isSuspended = currentStatus === "suspended";
 
   return (
     <Container className="py-12 px-4 dark:bg-gray-900 min-h-screen">
       <ToastContainer position="top-center" />
-      
+
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-hidden p-6 md:p-12 border border-gray-100 dark:border-gray-700">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          
           {/* ইমেজ সেকশন */}
           <div className="w-full h-[400px] md:h-[500px] rounded-3xl overflow-hidden shadow-inner bg-gray-50 flex items-center justify-center border border-gray-100">
             <img
@@ -106,7 +122,7 @@ const ProductDetailsPage = () => {
               <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-4 leading-tight">
                 {name}
               </h1>
-              
+
               <div className="flex items-center gap-4 mb-8">
                 <span className="text-3xl font-black text-green-600 flex items-center">
                   <FaDollarSign className="text-2xl" /> {price}
@@ -122,7 +138,13 @@ const ProductDetailsPage = () => {
                   <p className="text-xs font-bold text-gray-400 uppercase mb-1 flex items-center gap-2">
                     <FaWarehouse /> Available Stock
                   </p>
-                  <p className={`text-lg font-bold ${quantity > 0 ? "text-slate-700 dark:text-slate-200" : "text-red-500"}`}>
+                  <p
+                    className={`text-lg font-bold ${
+                      quantity > 0
+                        ? "text-slate-700 dark:text-slate-200"
+                        : "text-red-500"
+                    }`}
+                  >
                     {quantity > 0 ? `${quantity} Units` : "Out of Stock"}
                   </p>
                 </div>
@@ -131,19 +153,23 @@ const ProductDetailsPage = () => {
                     <FaBoxOpen /> Minimum Order
                   </p>
                   <p className="text-lg font-bold text-slate-700 dark:text-slate-200">
-                    {minOrder || 1} Units
+                    {/* ডাটাবেজে minOrderQty থাকলে সেটি দেখাবে, না থাকলে ১ দেখাবে */}
+                    {minOrderQty ? `${minOrderQty} Units` : "1 Units"}
                   </p>
                 </div>
               </div>
 
-              {/* পেমেন্ট মেথডস (Manager's Selection) */}
+              {/* পেমেন্ট মেথডস */}
               <div className="mb-8 p-5 bg-green-50/30 dark:bg-green-900/10 rounded-2xl border border-green-50 dark:border-green-900/20">
                 <h3 className="text-xs font-bold text-green-700 dark:text-green-500 uppercase mb-3 flex items-center gap-2">
                   <FaCreditCard /> Payment Options
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {paymentOptions?.map((option, idx) => (
-                    <span key={idx} className="px-4 py-2 bg-white dark:bg-gray-800 border border-green-100 dark:border-green-800 rounded-xl text-sm font-semibold shadow-sm text-slate-700 dark:text-slate-300">
+                    <span
+                      key={idx}
+                      className="px-4 py-2 bg-white dark:bg-gray-800 border border-green-100 dark:border-green-800 rounded-xl text-sm font-semibold shadow-sm text-slate-700 dark:text-slate-300"
+                    >
                       {option}
                     </span>
                   ))}
@@ -160,10 +186,13 @@ const ProductDetailsPage = () => {
               </div>
             </div>
 
-            {/* বাটন লজিক (Role & Status Dependent) */}
+            {/* বাটন লজিক (সংশোধিত) */}
             <div className="mt-4">
               {!user ? (
-                <button onClick={() => navigate("/login")} className="w-full py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 shadow-lg transition">
+                <button
+                  onClick={() => navigate("/login")}
+                  className="w-full py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 shadow-lg transition"
+                >
                   Login to Place Order
                 </button>
               ) : isSuspended ? (
@@ -172,14 +201,19 @@ const ProductDetailsPage = () => {
                 </div>
               ) : !isBuyer ? (
                 <div className="p-4 bg-amber-50 text-amber-700 border border-amber-200 rounded-2xl font-medium">
-                  অর্ডার শুধুমাত্র বায়ারদের জন্য। আপনার রোল: <span className="uppercase font-bold">{userRole}</span>
+                  অর্ডার শুধুমাত্র বায়ারদের জন্য। আপনার বর্তমান রোল:{" "}
+                  <span className="uppercase font-bold">{userRole}</span>
                 </div>
               ) : !isAuthorized ? (
                 <div className="p-4 bg-amber-100 text-amber-800 rounded-2xl font-bold text-center">
-                  Your account is {userStatus}. Order enabled after Admin Approval.
+                  Your account is {userStatus}. Order will be enabled after
+                  Admin Approval.
                 </div>
               ) : quantity <= 0 ? (
-                <button disabled className="w-full py-4 bg-gray-200 text-gray-500 font-bold rounded-2xl cursor-not-allowed">
+                <button
+                  disabled
+                  className="w-full py-4 bg-gray-200 text-gray-500 font-bold rounded-2xl cursor-not-allowed"
+                >
                   Out of Stock
                 </button>
               ) : (
@@ -198,7 +232,10 @@ const ProductDetailsPage = () => {
       {/* বুকিং মডাল */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={() => setIsModalOpen(false)}></div>
+          <div
+            className="absolute inset-0 bg-black/70 backdrop-blur-md"
+            onClick={() => setIsModalOpen(false)}
+          ></div>
           <div className="relative z-10 w-full max-w-2xl">
             <PlaceOrderModal
               product={product}

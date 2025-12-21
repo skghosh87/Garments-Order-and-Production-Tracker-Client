@@ -3,29 +3,27 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import {
   FaSpinner,
-  FaHourglassHalf,
-  FaBoxOpen,
   FaCheck,
   FaTimes,
+  FaEye,
+  FaHourglassHalf,
 } from "react-icons/fa";
 
 const PendingOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const API_URL = import.meta.env.VITE_SERVER_API;
 
-  /* ================= Fetch Only This Manager's Pending Orders ================= */
+  // পেন্ডিং অর্ডার ফেচ করা
   const fetchPendingOrders = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/api/v1/orders/pending`, {
+      const res = await axios.get(`${API_URL}/api/v1/manager/pending-orders`, {
         withCredentials: true,
       });
       setOrders(res.data);
     } catch (err) {
-      console.error("Fetch Error:", err);
-      Swal.fire("Error", "Could not load pending orders.", "error");
+      console.error("Fetch Pending Orders Error:", err);
     } finally {
       setLoading(false);
     }
@@ -35,160 +33,158 @@ const PendingOrders = () => {
     fetchPendingOrders();
   }, []);
 
-  /* ================= Handle Order Status Update (Approve/Reject) ================= */
-  const handleStatusUpdate = async (id, action) => {
-    const isApprove = action === "approve";
-
-    const confirm = await Swal.fire({
-      title: `${isApprove ? "Approve" : "Reject"} Order?`,
-      text: isApprove
-        ? "This will move the order to the Approved list."
-        : "This will mark the order as Rejected.",
-      icon: isApprove ? "question" : "warning",
-      showCancelButton: true,
-      confirmButtonColor: isApprove ? "#22c55e" : "#ef4444",
-      cancelButtonColor: "#6b7280",
-      confirmButtonText: isApprove ? "Yes, Approve it!" : "Yes, Reject it!",
-    });
-
-    if (!confirm.isConfirmed) return;
-
+  // ১. Approve Button লজিক (Status: Approved & timestamp logs)
+  const handleApprove = async (id) => {
     try {
-      // ডাইনামিক এপিআই রুট: /approve/:id অথবা /reject/:id
       const res = await axios.patch(
-        `${API_URL}/api/v1/orders/${action}/${id}`,
+        `${API_URL}/api/v1/orders/approve/${id}`,
         {},
         { withCredentials: true }
       );
-
       if (res.data.modifiedCount > 0) {
         Swal.fire(
-          isApprove ? "Approved!" : "Rejected!",
-          `Order has been ${
-            isApprove ? "confirmed" : "cancelled"
-          } successfully.`,
+          "Approved!",
+          "অর্ডারটি প্রোডাকশনের জন্য এপ্রুভ করা হয়েছে।",
           "success"
         );
-        // লিস্ট থেকে ওই অর্ডারটি সরিয়ে ফেলা (ফিল্টার করে)
-        setOrders(orders.filter((order) => order._id !== id));
+        fetchPendingOrders();
       }
     } catch (err) {
-      console.error("Update Error:", err);
-      Swal.fire("Error", "Failed to update order status.", "error");
+      Swal.fire("Error", "এপ্রুভ করা সম্ভব হয়নি।", "error");
     }
   };
 
-  if (loading) {
+  // ২. Reject Button লজিক (Status: Rejected)
+  const handleReject = async (id) => {
+    const confirm = await Swal.fire({
+      title: "Are you sure?",
+      text: "আপনি কি এই অর্ডারটি রিজেক্ট করতে চান?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      confirmButtonText: "Yes, Reject",
+    });
+
+    if (confirm.isConfirmed) {
+      try {
+        const res = await axios.patch(
+          `${API_URL}/api/v1/orders/reject/${id}`,
+          {},
+          { withCredentials: true }
+        );
+        if (res.data.modifiedCount > 0) {
+          Swal.fire("Rejected", "অর্ডারটি বাতিল করা হয়েছে।", "info");
+          fetchPendingOrders();
+        }
+      } catch (err) {
+        Swal.fire("Error", "রিজেক্ট করা সম্ভব হয়নি।", "error");
+      }
+    }
+  };
+
+  if (loading)
     return (
-      <div className="flex flex-col justify-center items-center min-h-[400px] space-y-4">
-        <FaSpinner className="animate-spin text-5xl text-yellow-500" />
-        <p className="text-gray-500 font-medium italic">
-          Scanning for new orders...
-        </p>
+      <div className="text-center p-20">
+        <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto" />
       </div>
     );
-  }
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700">
-      {/* Header Section */}
-      <div className="flex items-center gap-3 mb-8 border-b pb-5">
-        <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
-          <FaHourglassHalf className="text-2xl text-yellow-600" />
-        </div>
+    <div className="bg-white p-6 rounded-3xl shadow-xl border border-gray-100">
+      <div className="flex items-center gap-4 mb-8 bg-amber-50 p-6 rounded-2xl border border-amber-100">
+        <FaHourglassHalf className="text-3xl text-amber-600" />
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
-            Pending Orders
-          </h1>
-          <p className="text-sm text-gray-500">
+          <h2 className="text-2xl font-black text-gray-800 uppercase">
+            Pending Approvals
+          </h2>
+          <p className="text-amber-700 text-sm font-medium italic">
             Awaiting your approval to start production
           </p>
         </div>
       </div>
 
-      {orders.length === 0 ? (
-        <div className="text-center py-20 bg-gray-50 dark:bg-gray-900/50 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700">
-          <FaBoxOpen className="text-5xl text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500 text-lg">
-            Hooray! No pending orders at the moment.
-          </p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-700">
-          <table className="table w-full border-collapse">
-            <thead className="bg-gray-50 dark:bg-gray-700">
-              <tr className="text-gray-700 dark:text-gray-200 uppercase text-[12px] tracking-wider">
-                <th className="py-4 px-6 text-left">#</th>
-                <th className="py-4 px-6 text-left">Buyer</th>
-                <th className="py-4 px-6 text-left">Product Info</th>
-                <th className="py-4 px-6 text-center">Qty</th>
-                <th className="py-4 px-6 text-right">Total Price</th>
-                <th className="py-4 px-6 text-center">Decision</th>
+      <div className="overflow-x-auto">
+        <table className="table w-full border-separate border-spacing-y-2">
+          {/* টেবিল কলামসমূহ */}
+          <thead className="bg-gray-50 text-gray-600 uppercase text-[11px] font-black tracking-widest">
+            <tr>
+              <th className="py-4">Order ID</th>
+              <th>User (Buyer)</th>
+              <th>Product</th>
+              <th>Quantity</th>
+              <th>Order Date</th>
+              <th className="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders.length === 0 ? (
+              <tr>
+                <td
+                  colSpan="6"
+                  className="text-center py-20 text-gray-400 italic"
+                >
+                  No pending orders at the moment.
+                </td>
               </tr>
-            </thead>
-
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-              {orders.map((order, index) => (
+            ) : (
+              orders.map((order) => (
                 <tr
                   key={order._id}
-                  className="hover:bg-yellow-50/30 dark:hover:bg-gray-700/50 transition-colors"
+                  className="bg-white hover:bg-gray-50 transition-all border border-gray-100 shadow-sm"
                 >
-                  <td className="py-4 px-6 font-medium text-gray-400">
-                    {index + 1}
+                  <td className="font-mono text-xs text-blue-600 font-bold">
+                    #{order._id.slice(-8)}
                   </td>
-                  <td className="py-4 px-6">
+                  <td>
                     <div className="flex flex-col">
-                      <span className="font-semibold text-gray-800 dark:text-gray-200">
-                        {order.buyerName || "Client"}
+                      <span className="font-bold text-gray-800">
+                        {order.buyerName}
                       </span>
-                      <span className="text-[10px] text-gray-500 italic">
+                      <span className="text-[10px] text-gray-400">
                         {order.buyerEmail}
                       </span>
                     </div>
                   </td>
-                  <td className="py-4 px-6">
-                    <div className="flex flex-col">
-                      <span className="font-bold text-green-700 dark:text-green-400">
-                        {order.productName}
-                      </span>
-                      <span className="text-[10px] text-gray-400 font-mono">
-                        ID: {order.productId}
-                      </span>
-                    </div>
+                  <td className="font-bold">{order.productName}</td>
+                  <td className="font-black text-gray-600">
+                    {order.orderQuantity} PCS
                   </td>
-                  <td className="py-4 px-6 text-center font-bold text-gray-700 dark:text-gray-300">
-                    {order.orderQuantity || order.quantity}{" "}
-                    <span className="text-[10px] font-normal text-gray-400">
-                      PCS
-                    </span>
+                  <td className="text-gray-500 text-sm">
+                    {new Date(order.createdAt).toLocaleDateString("en-GB")}
                   </td>
-                  <td className="py-4 px-6 text-right font-black text-gray-900 dark:text-white">
-                    ${order.totalPrice?.toLocaleString()}
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="flex justify-center items-center gap-3">
-                      <button
-                        onClick={() => handleStatusUpdate(order._id, "approve")}
-                        className="p-2 bg-green-100 hover:bg-green-600 text-green-600 hover:text-white rounded-full transition-all shadow-sm group"
-                        title="Approve Order"
-                      >
-                        <FaCheck className="text-sm group-hover:scale-125 transition-transform" />
-                      </button>
-                      <button
-                        onClick={() => handleStatusUpdate(order._id, "reject")}
-                        className="p-2 bg-red-100 hover:bg-red-600 text-red-600 hover:text-white rounded-full transition-all shadow-sm group"
-                        title="Reject Order"
-                      >
-                        <FaTimes className="text-sm group-hover:scale-125 transition-transform" />
-                      </button>
-                    </div>
+                  <td className="flex justify-center gap-2 py-4">
+                    {/* ৩. View Button */}
+                    <button
+                      className="btn btn-xs btn-outline btn-info"
+                      title="View Details"
+                    >
+                      <FaEye />
+                    </button>
+
+                    {/* Approve Button */}
+                    <button
+                      onClick={() => handleApprove(order._id)}
+                      className="btn btn-xs btn-success text-white"
+                      title="Approve"
+                    >
+                      <FaCheck />
+                    </button>
+
+                    {/* Reject Button */}
+                    <button
+                      onClick={() => handleReject(order._id)}
+                      className="btn btn-xs btn-error text-white"
+                      title="Reject"
+                    >
+                      <FaTimes />
+                    </button>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
