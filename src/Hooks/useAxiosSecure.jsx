@@ -4,7 +4,9 @@ import { useEffect } from "react";
 import useAuth from "./useAuth";
 
 const axiosSecure = axios.create({
-  baseURL: import.meta.env.VITE_SERVER_API || "http://localhost:5000",
+  baseURL:
+    import.meta.env.VITE_SERVER_API ||
+    "garments-order-and-production-track-chi.vercel.app",
   withCredentials: true, // কুকি আদান-প্রদানের জন্য এটিই প্রধান
 });
 

@@ -15,7 +15,9 @@ import axios from "axios";
 // ১. কনটেক্সট তৈরি
 export const AuthContext = createContext(null);
 const googleProvider = new GoogleAuthProvider();
-const API = import.meta.env.VITE_SERVER_API || "http://localhost:5000";
+const API =
+  import.meta.env.VITE_SERVER_API ||
+  "garments-order-and-production-track-chi.vercel.app";
 
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
