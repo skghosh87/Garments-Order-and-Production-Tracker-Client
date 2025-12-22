@@ -23,6 +23,8 @@ import AboutUs from "../Pages/AboutUs";
 import Contact from "../Pages/Contact";
 import Profile from "../Pages/Dashboard/Shared/Profile";
 import PrivateRoute from "./PrivateRoute";
+import OrderDetails from "../Pages/Dashboard/Admin/OrderDetails";
+import Payment from "../Components/Payment";
 
 export const router = createBrowserRouter([
   {
@@ -48,6 +50,14 @@ export const router = createBrowserRouter([
         element: <AllProductsPage />,
       },
       // প্রোডাক্ট ডিটেইলস পেজ (Private Route): শুধু লগইন করা ইউজারদের জন্য
+      {
+        path: "/dashboard/payment/:orderId",
+        element: (
+          <PrivateRoute>
+            <Payment />
+          </PrivateRoute>
+        ),
+      },
       {
         path: "product-details/:id",
         // Admin, Manager, Buyer - সকলেই প্রোডাক্ট দেখতে পারবে।
@@ -157,6 +167,16 @@ export const router = createBrowserRouter([
           </RoleBasedRoute>
         ),
       },
+      {
+        path: "order-details/:id", // ড্যাশবোর্ড/order-details/:id (Admin-এর জন্য)
+        element: (
+          <RoleBasedRoute allowedRoles={["admin"]}>
+            {" "}
+            <OrderDetails />{" "}
+          </RoleBasedRoute>
+        ),
+      },
+
       // // --- ৪. শেয়ার্ড প্রোফাইল রুট (সকলের জন্য) ---
       {
         path: "profile",
