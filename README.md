@@ -49,6 +49,12 @@ The purpose of this project is to demonstrate a full-stack production-level appl
 - React Hook Form
 - SweetAlert2 / React Toastify
 
+Role        Email                 Password
+Admin     admin1@gmail.com        Admin1
+Manager   benwoods@gmail.com      Manager1
+Buyer     elera1@gmail.com        Buyer1
+
+
 ## 🔐 Environment Variables
 
 Create a `.env` file in the root directory and add:
