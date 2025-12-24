@@ -8,10 +8,11 @@ import {
   FaPhone,
   FaEnvelope,
 } from "react-icons/fa";
+import Logo from "/Logo-Final.png"; // লোগো ইমপোর্ট
 
 const Footer = () => {
   // ডায়নামিক লোগো পাথ এবং নাম
-  const logoPath = "/Logo-Filnal.png"; // public ফোল্ডারের জন্য সরাসরি পাথ
+  // const logoPath = "/Logo-Filnal.png"; // public ফোল্ডারের জন্য সরাসরি পাথ
   const websiteName = "Garments Tracker";
   const description =
     "Simplifying garment production workflow, from order tracking to timely delivery, for small and medium factories.";
@@ -25,7 +26,7 @@ const Footer = () => {
             <div className="flex items-center gap-2 mb-3">
               {/* ডায়নামিক লোগো ইমপ্লিমেন্টেশন */}
               <img
-                src={logoPath}
+                src={Logo}
                 alt={`${websiteName} Logo`}
                 className="h-10 w-auto object-contain"
               />
