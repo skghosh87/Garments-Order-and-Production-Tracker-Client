@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { FaUserShield, FaEdit } from "react-icons/fa";
+import { FaUserShield, FaEdit, FaCheckCircle, FaBan } from "react-icons/fa";
 import useAuth from "../../../hooks/useAuth";
 
 const ManageUsers = () => {
-  const { user: currentUser } = useAuth(); // বর্তমানে লগইন করা ইউজারের তথ্য
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -61,9 +61,9 @@ const ManageUsers = () => {
     }
   };
 
-  const handleStatusUpdate = async (user, status) => {
-    // নিজের একাউন্ট সাসপেন্ড করা প্রতিরোধের অতিরিক্ত নিরাপত্তা চেক
-    if (user.email === currentUser?.email && status === "suspended") {
+  // স্ট্যাটাস আপডেট করার ফাংশন (Verified / Suspended)
+  const handleStatusUpdate = async (user, newStatus) => {
+    if (user.email === currentUser?.email && newStatus === "suspended") {
       return Swal.fire(
         "Action Denied",
         "You cannot suspend your own account!",
@@ -74,12 +74,12 @@ const ManageUsers = () => {
     try {
       const res = await axios.patch(
         `${API_URL}/api/v1/users/status/${user._id}`,
-        { status: status },
+        { status: newStatus },
         { withCredentials: true }
       );
 
       if (res.data.modifiedCount > 0) {
-        Swal.fire("Updated", `User status is now ${status}`, "success");
+        Swal.fire("Updated", `User status is now ${newStatus}`, "success");
         fetchUsers();
       }
     } catch (err) {
@@ -97,7 +97,7 @@ const ManageUsers = () => {
   return (
     <div className="bg-white p-6 rounded-3xl shadow-xl border border-gray-100 min-h-[60vh]">
       <div className="flex items-center gap-3 mb-8 border-b pb-4">
-        <FaUserShield className="text-3xl text-blue-600" />
+        <FaUserShield className="text-3xl text-green-600" />
         <h2 className="text-2xl font-black text-gray-800 uppercase tracking-tight">
           Manage All Users
         </h2>
@@ -110,6 +110,7 @@ const ManageUsers = () => {
               <th className="rounded-l-xl">Name</th>
               <th>Email</th>
               <th>Role</th>
+              <th>Status</th>
               <th className="text-center rounded-r-xl">Actions</th>
             </tr>
           </thead>
@@ -117,7 +118,7 @@ const ManageUsers = () => {
             {users.length === 0 ? (
               <tr>
                 <td
-                  colSpan="4"
+                  colSpan="5"
                   className="text-center py-10 text-gray-400 italic"
                 >
                   No users found.
@@ -132,7 +133,7 @@ const ManageUsers = () => {
                     className="bg-white hover:bg-gray-50 transition-all shadow-sm border border-gray-100"
                   >
                     <td className="font-bold text-gray-800">
-                      {u.displayName || u.name || "N/A"}{" "}
+                      {u.displayName || u.name || "N/A"}
                       {isSelf && (
                         <span className="badge badge-sm badge-ghost ml-1">
                           You
@@ -153,45 +154,55 @@ const ManageUsers = () => {
                         {u.role}
                       </span>
                     </td>
-                    <td className="flex justify-center gap-3 py-4">
-                      {/* Update Button */}
+                    {/* স্ট্যাটাস ব্যাজ */}
+                    <td>
+                      <span
+                        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
+                          u.status === "verified"
+                            ? "bg-green-100 text-green-700"
+                            : u.status === "pending"
+                            ? "bg-yellow-100 text-yellow-600"
+                            : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        {u.status || "pending"}
+                      </span>
+                    </td>
+                    <td className="flex justify-center gap-2 py-4">
+                      {/* ভেরিফাই বাটন - শুধুমাত্র পেন্ডিং ইউজারদের জন্য */}
+                      {u.status === "pending" && (
+                        <button
+                          onClick={() => handleStatusUpdate(u, "verified")}
+                          className="btn btn-xs btn-success text-white px-3 flex items-center gap-1"
+                        >
+                          <FaCheckCircle /> Verify
+                        </button>
+                      )}
+
+                      {/* আপডেট রোল বাটন */}
                       <button
                         onClick={() => openModal(u)}
                         disabled={isSelf}
-                        title={
-                          isSelf
-                            ? "নিজের রোল নিজে পরিবর্তন করা সম্ভব নয়"
-                            : "Update Role"
-                        }
-                        className={`btn btn-xs btn-outline btn-primary flex items-center gap-1 ${
-                          isSelf ? "opacity-50 cursor-not-allowed" : ""
-                        }`}
+                        className="btn btn-xs btn-outline btn-primary flex items-center gap-1"
                       >
                         <FaEdit /> Update
                       </button>
 
-                      {/* Suspend/Approve Button */}
+                      {/* সাসপেন্ড বা একটিভেট বাটন */}
                       {u.status === "suspended" ? (
                         <button
-                          onClick={() => handleStatusUpdate(u, "active")}
-                          className="btn btn-xs btn-success text-white px-4 rounded-lg shadow-sm"
+                          onClick={() => handleStatusUpdate(u, "verified")}
+                          className="btn btn-xs btn-outline btn-success px-3"
                         >
-                          Approve
+                          Activate
                         </button>
                       ) : (
                         <button
                           onClick={() => handleStatusUpdate(u, "suspended")}
                           disabled={isSelf}
-                          title={
-                            isSelf
-                              ? "নিজের একাউন্ট সাসপেন্ড করা সম্ভব নয়"
-                              : "Suspend User"
-                          }
-                          className={`btn btn-xs btn-error text-white px-4 rounded-lg shadow-sm ${
-                            isSelf ? "opacity-50 cursor-not-allowed" : ""
-                          }`}
+                          className="btn btn-xs btn-error text-white px-3 flex items-center gap-1"
                         >
-                          Suspend
+                          <FaBan /> Suspend
                         </button>
                       )}
                     </td>
@@ -203,7 +214,7 @@ const ManageUsers = () => {
         </table>
       </div>
 
-      {/* --- DaisyUI Modal --- */}
+      {/* DaisyUI Modal */}
       <dialog
         id="update_role_modal"
         className="modal modal-bottom sm:modal-middle"
@@ -218,7 +229,6 @@ const ManageUsers = () => {
               {selectedUser?.email}
             </span>
           </p>
-
           <div className="form-control w-full">
             <label className="label">
               <span className="label-text font-bold uppercase text-[12px] text-gray-500">
@@ -235,7 +245,6 @@ const ManageUsers = () => {
               <option value="admin">Admin</option>
             </select>
           </div>
-
           <div className="modal-action">
             <form method="dialog">
               <button className="btn btn-ghost">Cancel</button>

@@ -5,6 +5,7 @@ import { IoMdClose } from "react-icons/io";
 import MyLink from "../Shared/MyLink";
 import Container from "../Shared/Container";
 import { Link, useNavigate } from "react-router-dom";
+import Logo from "/Logo-Final.png";
 
 const Navbar = () => {
   const { user, userRole, logOut } = useAuth();
@@ -104,7 +105,12 @@ const Navbar = () => {
             to="/"
             className="text-xl md:text-2xl font-bold text-green-600 flex items-center gap-2"
           >
-            <span className="bg-green-600 text-white p-1 rounded">GT</span>
+            {/* লোগো ইমেজটি এখানে যোগ করা হয়েছে */}
+            <img
+              src={Logo}
+              alt="GT Logo"
+              className="w-10 h-10 object-contain"
+            />
             <span className="hidden sm:block">Garments Tracker</span>
           </Link>
 

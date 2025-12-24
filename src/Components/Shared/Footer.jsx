@@ -7,10 +7,11 @@ import {
   FaMapMarkerAlt,
   FaPhone,
   FaEnvelope,
-} from "react-icons/fa"; // সোশ্যাল ও কন্টাক্ট আইকন
+} from "react-icons/fa";
 
 const Footer = () => {
-  // আপনার ফুটারে প্রদর্শনের জন্য লোগো বা নাম
+  // ডায়নামিক লোগো পাথ এবং নাম
+  const logoPath = "/Logo-Filnal.png"; // public ফোল্ডারের জন্য সরাসরি পাথ
   const websiteName = "Garments Tracker";
   const description =
     "Simplifying garment production workflow, from order tracking to timely delivery, for small and medium factories.";
@@ -21,10 +22,19 @@ const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* ১. লোগো ও বর্ণনা (Logo & Description) */}
           <div className="col-span-2 md:col-span-1">
-            <h3 className="text-2xl font-bold mb-3 text-blue-400">
-              {websiteName}
-            </h3>
+            <div className="flex items-center gap-2 mb-3">
+              {/* ডায়নামিক লোগো ইমপ্লিমেন্টেশন */}
+              <img
+                src={logoPath}
+                alt={`${websiteName} Logo`}
+                className="h-10 w-auto object-contain"
+              />
+              <h3 className="text-2xl font-bold text-blue-400">
+                {websiteName}
+              </h3>
+            </div>
             <p className="text-sm text-gray-400 mb-4">{description}</p>
+
             {/* সোশ্যাল মিডিয়া লিংকস */}
             <div className="flex space-x-4">
               <a
@@ -34,7 +44,6 @@ const Footer = () => {
               >
                 <FaFacebook size={20} />
               </a>
-              {/* Assingment রিকোয়ারমেন্ট অনুযায়ী নতুন X লোগো ব্যবহার করা উচিত, তবে এখানে আপাতত Twitter আইকন রাখা হলো */}
               <a
                 href="#"
                 target="_blank"
@@ -93,7 +102,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* ৩. কুইক লিংকস (Quick Links - ড্যাশবোর্ড) */}
+          {/* ৩. কুইক লিংকস (Quick Access) */}
           <div>
             <h4 className="text-lg font-semibold mb-4 border-b border-blue-500/50 pb-1">
               Quick Access
@@ -150,7 +159,7 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* কপিরাইট তথ্য (Copyright Information) */}
+        {/* কপিরাইট তথ্য */}
         <div className="border-t border-gray-700/50 pt-8 mt-8 text-center">
           <p className="text-gray-400 text-sm">
             &copy; {new Date().getFullYear()} {websiteName}. All Rights
